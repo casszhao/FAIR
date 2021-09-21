@@ -7,10 +7,15 @@ pip install nltk numpy scikit-learn scikit-image matplotlib torchtext
 pip install transformers pymediawiki
 ```
 ## Workflow
-1. Get pre-defined wikipedia categories (we call it candidate categories). These categories are the ones we want to choose from to summarize/label a given abstract/paper.
+1. Get pre-defined wikipedia categories (we call it candidate categories/candidate list). These categories are the ones we want to choose from to summarize/label a given abstract/paper.
 2. For finding similar and related topics:
-    * get a ClinicalBERT embeddings for each categories (in the )
-    * calculate the cosine similarity between each categories
-    * given a category, retrievel the most cosine similar categories 
+    * get a ClinicalBERT embeddings for each categories (in the candidate categories)
+      ```
+      Obtain_and_save_pre_defined_categories_embeddings.ipynb
+      ``
+    * given a category, retrievel the most similar categories via calculating the cosine similarity between each categories
+      ```
+      similarity_given_anytopic.ipynb
+      ```
 3. For labelling a paper:
     * 
