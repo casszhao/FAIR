@@ -7,7 +7,7 @@ pip install nltk numpy scikit-learn scikit-image matplotlib torchtext
 pip install transformers pymediawiki
 ```
 ## Workflow
-1. Get pre-defined wikipedia categories (we call it candidate categories/candidate list). These categories are the ones we want to choose from to summarize/label a given abstract/paper.
+1. Get pre-defined wikipedia categories (we call it candidate categories/candidate list). These categories are the ones we want to use to summarize/label a given abstract/paper (We also mannually reviewed the list and removed categories that are not relavent).
 2. For finding similar and related topics:
     * get a ClinicalBERT embeddings for each categories (in the candidate categories)
       ```
