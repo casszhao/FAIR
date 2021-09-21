@@ -21,7 +21,7 @@ pip install transformers pymediawiki
     * 1. filter out all nouns
     * 2. save nounts that also show up in the candidate list
     * 3. retrieve the related categories of nouns, and keep the ones also in the candidate list
-    * 4. combine lists from step 2 and 3.
+    * 4. combine lists from step b and c.
       ```
       Label_arbitrary_paper.ipynb
       ```
