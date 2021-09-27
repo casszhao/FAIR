@@ -18,10 +18,11 @@ pip install transformers pymediawiki
       similarity_given_anytopic.ipynb
       ```
 3. For labelling a paper:
-    * 1. filter out all nouns
-    * 2. save nounts that also show up in the candidate list
-    * 3. retrieve the related categories of nouns, and keep the ones also in the candidate list
-    * 4. combine lists from step b and c.
+    * 1. get unigram, bigram and trigram in the abstract (step 2).
+    * 2. save ngrams that also show up in the candidate list (step 2).
+    * 3. get all nouns in the abstract (step 3).
+    * 3. retrieve the related categories of nouns, and save the related categories that also show up in the candidate list (step 3).
+    * 4. combine lists from step b and c (step 4).
       ```
       Label_arbitrary_paper.ipynb
       ```
