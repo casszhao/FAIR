@@ -25,3 +25,4 @@ pip install transformers pymediawiki
       ```
       Label_arbitrary_paper.ipynb
       ```
+      ![Workflow of labelling a given abstract](https://github.com/casszhao/FAIR/blob/5fdd6d61bec494aab9354998dccecd22bb04687d/images/Process%20of%20labelling%20a%20abstract.jpg)
