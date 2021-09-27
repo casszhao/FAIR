@@ -11,7 +11,7 @@ pip install transformers pymediawiki
 2. For finding similar and related topics:
     * get a ClinicalBERT embeddings for each categories (in the candidate categories)
       ```
-      Obtain_and_save_pre_defined_categories_embeddings.ipynb
+      /sources/Obtain_and_save_embeddingspre_for_predefined_categories.ipynb
       ```
     * given a category, retrievel the most similar categories via calculating the cosine similarity between each categories
       ```
