@@ -8,6 +8,8 @@ from transformers import BertTokenizer, BertModel, BertConfig
 from torch import cuda
 device = 'cuda' if cuda.is_available() else 'cpu'
 
+test = True
+
 # laod data
 url = 'https://raw.githubusercontent.com/casszhao/FAIR/main/sources/PROGRESSSample.tsv'
 df = pd.read_csv(url, sep='\t', usecols=['PaperTitle', 'Abstract', 'PlaceOfResidence','RaceEthnicity','Occupation','GenderSex','Religion',
@@ -39,7 +41,11 @@ print(new_df.head())
 
 # define hypeparameters
 
-MAX_LEN = 20
+if test == True:
+    MAX_LEN = 20
+else:
+    MAX_LEN = 500
+
 TRAIN_BATCH_SIZE = 2
 VALID_BATCH_SIZE = 1
 EPOCHS = 1
@@ -180,12 +186,23 @@ def validation(epoch):
     return fin_outputs, fin_targets
 
 
+binary_output = []
+logits = []
 for epoch in range(EPOCHS):
     outputs, targets = validation(epoch)
+    print(outputs)
+    logits.append(outputs)
     outputs = np.array(outputs) >= 0.5
+    binary_output.append(outputs)
+
     accuracy = metrics.accuracy_score(targets, outputs)
     f1_score_micro = metrics.f1_score(targets, outputs, average='micro')
     f1_score_macro = metrics.f1_score(targets, outputs, average='macro')
     print(f"Accuracy Score = {accuracy}")
     print(f"F1 Score (Micro) = {f1_score_micro}")
     print(f"F1 Score (Macro) = {f1_score_macro}")
+
+new_df['prediction'] = binary_output
+new_df['probability'] = logits
+
+new_df.to_csv('pred_results.csv')
