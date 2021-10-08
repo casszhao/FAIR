@@ -29,6 +29,8 @@ print(df.head())
 
 
 df['list'] = df[df.columns[2:11]].values.tolist()
+LABEL_NUM = len(df['list'][5])
+print('label numbers: ', LABEL_NUM)
 # bool_list = list(map(bool,int_list))
 
 new_df = df[['text', 'list']].copy()
@@ -37,7 +39,7 @@ print(new_df.head())
 
 # define hypeparameters
 
-MAX_LEN = 200
+MAX_LEN = 20
 TRAIN_BATCH_SIZE = 2
 VALID_BATCH_SIZE = 1
 EPOCHS = 1
@@ -116,14 +118,14 @@ class BERTClass(torch.nn.Module):
         super(BERTClass, self).__init__()
         self.l1 = transformers.BertModel.from_pretrained('bert-base-uncased')
         self.l2 = torch.nn.Dropout(0.3)
-        self.l3 = torch.nn.Linear(768, 6)
+        self.l3 = torch.nn.Linear(768, LABEL_NUM)
 
     def forward(self, ids, mask, token_type_ids):
         output_1 = self.l1(ids, attention_mask=mask, token_type_ids=token_type_ids)
         pooled_output = output_1[1]
         # print(output_1) # dropout(): argument 'input' (position 1) must be Tensor, not str
         output_2 = self.l2(pooled_output)
-        output = self.l3(output_1)
+        output = self.l3(output_2)
         return output
 
 
