@@ -196,8 +196,10 @@ for i, label in enumerate(list_of_label):
     print(num_label)
     num_label_list = np.concatenate([num_label_list, num_label])
 
-
-test_dataset['pred_list'] = num_label_list.reshape(len(test_dataset),len(list_of_label))
+print(len(num_label_list))
+pred_list = num_label_list.reshape(len(test_dataset),len(list_of_label)).tolist()
+print(pred_list)
+test_dataset['pred_list'] = pred_list
 test_dataset.to_csv('mul_binary_pred_results.csv')
 f1_score_micro = metrics.f1_score(test_dataset['list'], test_dataset['pred_list'], average='micro')
 f1_score_macro = metrics.f1_score(test_dataset['list'], test_dataset['pred_list'], average='macro')
