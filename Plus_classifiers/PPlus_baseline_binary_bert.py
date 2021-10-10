@@ -1,10 +1,11 @@
+
 import numpy as np
 import pandas as pd
 from sklearn import metrics
 import transformers
 import torch
 from torch.utils.data import Dataset, DataLoader, RandomSampler, SequentialSampler
-from transformers import BertTokenizer, BertModel, BertConfig
+from transformers import BertModel, BertConfig, BertTokenizer, BertForSequenceClassification
 from torch import cuda
 device = 'cuda' if cuda.is_available() else 'cpu'
 
@@ -33,11 +34,9 @@ print(df.head())
 
 
 df['list'] = df[df.columns[2:11]].values.tolist()
-LABEL_NUM = len(df['list'][5])
-print('label numbers: ', LABEL_NUM)
-# bool_list = list(map(bool,int_list))
-
 new_df = df[['text', 'list']].copy()
+list_of_label = ['PlaceOfResidence','RaceEthnicity','Occupation','GenderSex','Religion', 'Education','SocioeconomicStatus', 'SocialCapital','Plus']
+
 print(new_df.head())
 
 
@@ -89,8 +88,6 @@ class CustomDataset(Dataset):
             'token_type_ids': torch.tensor(token_type_ids, dtype=torch.long),
             'targets': torch.tensor(self.targets[index], dtype=torch.float)
         }
-
-
 # Creating the dataset and dataloader for the neural network
 
 train_size = 0.8
@@ -121,58 +118,37 @@ training_loader = DataLoader(training_set, **train_params)
 testing_loader = DataLoader(testing_set, **test_params)
 
 
-class BERTClass(torch.nn.Module):
-    def __init__(self):
-        super(BERTClass, self).__init__()
-        self.l1 = transformers.BertModel.from_pretrained('bert-base-uncased')
-        self.l2 = torch.nn.Dropout(0.3)
-        self.l3 = torch.nn.Linear(768, LABEL_NUM)
-
-    def forward(self, ids, mask, token_type_ids):
-        output_1 = self.l1(ids, attention_mask=mask, token_type_ids=token_type_ids)
-        pooled_output = output_1[1]
-        # print(output_1) # dropout(): argument 'input' (position 1) must be Tensor, not str
-        output_2 = self.l2(pooled_output)
-        output = self.l3(output_2)
-        return output
-
-
-model = BERTClass()
+model = BertForSequenceClassification.from_pretrained('bert-base-uncased')
 model.to(device)
 
-
-def loss_fn(outputs, targets):
-    return torch.nn.BCEWithLogitsLoss()(outputs, targets)
 
 optimizer = torch.optim.Adam(params =  model.parameters(), lr=LEARNING_RATE)
 
 
-def train(epoch):
+def train(epoch, label_index, model_name, optimizer_name):
+    model = model_name
+    optimizer = optimizer_name
     model.train()
     for _, data in enumerate(training_loader, 0):
         ids = data['ids'].to(device, dtype=torch.long)
         mask = data['mask'].to(device, dtype=torch.long)
         token_type_ids = data['token_type_ids'].to(device, dtype=torch.long)
-        targets = data['targets'].to(device, dtype=torch.float)
+        targets_all = data['targets'].to(device, dtype=torch.float)
 
-        outputs = model(ids, mask, token_type_ids)
+        targets_1d =  torch.empty(targets_all.size()[0])
+        targets_1d[:] = targets_all[:, label_index] # i
+        targets = torch.stack([1-targets_1d, targets_1d], dim = 1)
 
-        optimizer.zero_grad()
-        loss = loss_fn(outputs, targets)
-        if _ % 5000 == 0:
-            print(f'Epoch: {epoch}, Loss:  {loss.item()}')
+        outputs = model(ids, mask, token_type_ids, labels=targets)
+        logits = outputs.logits
+        loss = outputs.loss
 
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
 
-for epoch in range(EPOCHS):
-    train(epoch)
-
-
-# define validating
-
-def validation(epoch):
+def validation(epoch,model_name):
+    model = model_name
     model.eval()
     fin_targets=[]
     fin_outputs=[]
@@ -181,29 +157,47 @@ def validation(epoch):
             ids = data['ids'].to(device, dtype = torch.long)
             mask = data['mask'].to(device, dtype = torch.long)
             token_type_ids = data['token_type_ids'].to(device, dtype = torch.long)
-            targets = data['targets'].to(device, dtype = torch.float)
+            targets_all = data['targets'].to(device, dtype=torch.float)
+
+            targets_1d =  torch.empty(targets_all.size()[0])
+            targets_1d[:] = targets_all[:, label_index] # i
+            targets = torch.stack([1-targets_1d, targets_1d], dim = 1)
+
             outputs = model(ids, mask, token_type_ids)
             fin_targets.extend(targets.cpu().detach().numpy().tolist())
-            fin_outputs.extend(torch.sigmoid(outputs).cpu().detach().numpy().tolist())
+            fin_outputs.extend(outputs.logits.cpu().detach().numpy().tolist())
     return fin_outputs, fin_targets
 
+for i, label in enumerate(list_of_label):
+  # model_name = 'model_' + str(label)
+  # optimizer_name = 'optimizer_' + str(label)
 
-binary_output = []
-logits = []
-for epoch in range(EPOCHS):
-    outputs, targets = validation(epoch)
-    logits.append(outputs)
-    outputs = np.array(outputs) >= 0.5
-    binary_output.append(outputs)
+  # one_label_results = []
 
-    accuracy = metrics.accuracy_score(targets, outputs)
-    f1_score_micro = metrics.f1_score(targets, outputs, average='micro')
-    f1_score_macro = metrics.f1_score(targets, outputs, average='macro')
-    print(f"Accuracy Score = {accuracy}")
-    print(f"F1 Score (Micro) = {f1_score_micro}")
-    print(f"F1 Score (Macro) = {f1_score_macro}")
 
-new_df['prediction'] = binary_output
-new_df['probability'] = logits
+  model = BertForSequenceClassification.from_pretrained('bert-base-uncased')
+  model.to(device)
+  optimizer = torch.optim.Adam(params =  model.parameters(), lr=LEARNING_RATE)
+  label_index = i
 
-new_df.to_csv('pred_results.csv')
+
+  for epoch in range(EPOCHS):
+      train(epoch, label_index, model, optimizer)
+
+
+  outputs, targets = validation(epoch, model)
+  outputs = np.array(outputs) >= 0.5
+  num_label = outputs[:,1].astype(int)
+
+  if i ==0:
+    num_label_list = num_label
+  else:
+    print(print(num_label))
+    print(num_label)
+    num_label_list = np.concatenate([num_label_list, num_label])
+
+
+test_dataset['pred_list'] = num_label_list.reshape(len(test_dataset),len(list_of_label))
+test_dataset.to_csv('mul_binary_pred_results.csv')
+f1_score_micro = metrics.f1_score(test_dataset['list'], test_dataset['pred_list'], average='micro')
+f1_score_macro = metrics.f1_score(test_dataset['list'], test_dataset['pred_list'], average='macro')
