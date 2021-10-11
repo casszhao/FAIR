@@ -10,7 +10,7 @@ from torch import cuda
 device = 'cuda' if cuda.is_available() else 'cpu'
 
 
-test = True
+test = False
 
 
 # laod data
@@ -45,11 +45,12 @@ print(new_df.head())
 if test == True:
     MAX_LEN = 20
 else:
-    MAX_LEN = 500
+    MAX_LEN = 200
 
-TRAIN_BATCH_SIZE = 2
-VALID_BATCH_SIZE = 1
-EPOCHS = 1
+LABEL_NUM = 9
+TRAIN_BATCH_SIZE = 8
+VALID_BATCH_SIZE = 4
+EPOCHS = 3
 LEARNING_RATE = 1e-05
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 
@@ -125,7 +126,7 @@ model.to(device)
 optimizer = torch.optim.Adam(params =  model.parameters(), lr=LEARNING_RATE)
 
 
-def train(epoch, label_index, model_name, optimizer_name):
+def train_binary(epoch, label_index, model_name, optimizer_name):
     model = model_name
     optimizer = optimizer_name
     model.train()
@@ -137,7 +138,7 @@ def train(epoch, label_index, model_name, optimizer_name):
 
         targets_1d =  torch.empty(targets_all.size()[0])
         targets_1d[:] = targets_all[:, label_index] # i
-        targets = torch.stack([1-targets_1d, targets_1d], dim = 1)
+        targets = torch.stack([1-targets_1d, targets_1d], dim = 1).to(device)
 
         outputs = model(ids, mask, token_type_ids, labels=targets)
         logits = outputs.logits
@@ -147,7 +148,7 @@ def train(epoch, label_index, model_name, optimizer_name):
         loss.backward()
         optimizer.step()
 
-def validation(epoch,model_name):
+def validation_binary(epoch,model_name):
     model = model_name
     model.eval()
     fin_targets=[]
@@ -161,19 +162,16 @@ def validation(epoch,model_name):
 
             targets_1d =  torch.empty(targets_all.size()[0])
             targets_1d[:] = targets_all[:, label_index] # i
-            targets = torch.stack([1-targets_1d, targets_1d], dim = 1)
+            targets = torch.stack([1-targets_1d, targets_1d], dim = 1).to(device)
 
             outputs = model(ids, mask, token_type_ids)
             fin_targets.extend(targets.cpu().detach().numpy().tolist())
             fin_outputs.extend(outputs.logits.cpu().detach().numpy().tolist())
     return fin_outputs, fin_targets
 
+
+
 for i, label in enumerate(list_of_label):
-  # model_name = 'model_' + str(label)
-  # optimizer_name = 'optimizer_' + str(label)
-
-  # one_label_results = []
-
 
   model = BertForSequenceClassification.from_pretrained('bert-base-uncased')
   model.to(device)
@@ -182,24 +180,36 @@ for i, label in enumerate(list_of_label):
 
 
   for epoch in range(EPOCHS):
-      train(epoch, label_index, model, optimizer)
+    train_binary(epoch, label_index, model, optimizer)
 
 
-  outputs, targets = validation(epoch, model)
-  outputs = np.array(outputs) >= 0.5
-  num_label = outputs[:,1].astype(int)
+  outputs, targets = validation_binary(epoch, model)
+  pred = np.array(outputs) >= 0.5
+  pred = pred[:,1].astype(int)
 
   if i ==0:
-    num_label_list = num_label
+    binary_pred = pred
+    binary_prob = outputs
+    print('binary_pred ',binary_pred)
+    print('binary_prob ',binary_prob)
   else:
-    print(print(num_label))
-    print(num_label)
-    num_label_list = np.concatenate([num_label_list, num_label])
+    binary_pred = np.concatenate([binary_pred, pred])
+    binary_prob = np.concatenate([binary_prob, outputs])
+    print('binary_pred ',binary_pred)
+    print('binary_prob ',binary_prob)
 
-print(len(num_label_list))
-pred_list = num_label_list.reshape(len(test_dataset),len(list_of_label)).tolist()
-print(pred_list)
-test_dataset['pred_list'] = pred_list
-test_dataset.to_csv('mul_binary_pred_results.csv')
-f1_score_micro = metrics.f1_score(test_dataset['list'], test_dataset['pred_list'], average='micro')
-f1_score_macro = metrics.f1_score(test_dataset['list'], test_dataset['pred_list'], average='macro')
+
+binary_pred = binary_pred.reshape(len(test_dataset),len(list_of_label)).tolist()
+binary_prob = binary_prob.reshape(len(test_dataset),len(list_of_label)).tolist()
+test_dataset['binary_pred'] = binary_pred
+test_dataset['binary_prob'] = binary_prob
+
+# labels_array = MultiLabelBinarizer().fit_transform(test_dataset['list'])
+# preds_array = MultiLabelBinarizer().fit_transform(test_dataset['pred_list'])
+
+binary_f1_score_micro = metrics.f1_score(targets, binary_pred, average='micro')
+binary_f1_score_macro = metrics.f1_score(targets, binary_pred, average='macro')
+print(f"binary F1 Score (Micro) = {binary_f1_score_micro}")
+print(f"binary F1 Score (Macro) = {binary_f1_score_macro}")
+
+test_dataset.to_csv('./results/binary_pred_results.csv')

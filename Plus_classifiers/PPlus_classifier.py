@@ -8,7 +8,21 @@ from transformers import BertTokenizer, BertModel, BertConfig
 from torch import cuda
 device = 'cuda' if cuda.is_available() else 'cpu'
 
-test = True
+test = False
+
+# define hypeparameters
+
+if test == True:
+    MAX_LEN = 20
+else:
+    MAX_LEN = 200
+
+TRAIN_BATCH_SIZE = 2
+VALID_BATCH_SIZE = 1
+EPOCHS = 3
+LEARNING_RATE = 1e-05
+tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+
 
 # laod data
 url = 'https://raw.githubusercontent.com/casszhao/FAIR/main/sources/PROGRESSSample.tsv'
@@ -38,22 +52,10 @@ print('label numbers: ', LABEL_NUM)
 new_df = df[['text', 'list']].copy()
 print(new_df.head())
 
+list_of_label = ['PlaceOfResidence','RaceEthnicity','Occupation','GenderSex','Religion', 'Education','SocioeconomicStatus', 'SocialCapital','Plus']
 
-# define hypeparameters
-
-if test == True:
-    MAX_LEN = 20
-else:
-    MAX_LEN = 500
-
-TRAIN_BATCH_SIZE = 2
-VALID_BATCH_SIZE = 1
-EPOCHS = 1
-LEARNING_RATE = 1e-05
-tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 
 class CustomDataset(Dataset):
-
     def __init__(self, dataframe, tokenizer, max_len):
         self.tokenizer = tokenizer
         self.data = dataframe
@@ -79,7 +81,6 @@ class CustomDataset(Dataset):
         ids = inputs['input_ids']
         mask = inputs['attention_mask']
         token_type_ids = inputs["token_type_ids"]
-
 
         return {
             'ids': torch.tensor(ids, dtype=torch.long),
@@ -119,7 +120,7 @@ training_loader = DataLoader(training_set, **train_params)
 testing_loader = DataLoader(testing_set, **test_params)
 
 
-class BERTClass(torch.nn.Module):
+class BERT_multilabel(torch.nn.Module):
     def __init__(self):
         super(BERTClass, self).__init__()
         self.l1 = transformers.BertModel.from_pretrained('bert-base-uncased')
@@ -135,7 +136,7 @@ class BERTClass(torch.nn.Module):
         return output
 
 
-model = BERTClass()
+model = BERT_multilabel()
 model.to(device)
 
 
@@ -145,7 +146,7 @@ def loss_fn(outputs, targets):
 optimizer = torch.optim.Adam(params =  model.parameters(), lr=LEARNING_RATE)
 
 
-def train(epoch):
+def train_multilabel(epoch):
     model.train()
     for _, data in enumerate(training_loader, 0):
         ids = data['ids'].to(device, dtype=torch.long)
@@ -165,12 +166,12 @@ def train(epoch):
         optimizer.step()
 
 for epoch in range(EPOCHS):
-    train(epoch)
+    train_multilabel(epoch)
 
 
 # define validating
-
-def validation(epoch):
+def validation_multilabel(model):
+    model = model
     model.eval()
     fin_targets=[]
     fin_outputs=[]
@@ -186,23 +187,19 @@ def validation(epoch):
     return fin_outputs, fin_targets
 
 
-binary_output = []
-logits = []
-for epoch in range(EPOCHS):
-    outputs, targets = validation(epoch)
-    print(outputs)
-    logits.append(outputs)
-    outputs = np.array(outputs) >= 0.5
-    binary_output.append(outputs)
+multilabel_prod, targets = validation_multilabel(model)
+multilabel_pred = np.array(multilabel_prod) >= 0.5
 
-    accuracy = metrics.accuracy_score(targets, outputs)
-    f1_score_micro = metrics.f1_score(targets, outputs, average='micro')
-    f1_score_macro = metrics.f1_score(targets, outputs, average='macro')
-    print(f"Accuracy Score = {accuracy}")
-    print(f"F1 Score (Micro) = {f1_score_micro}")
-    print(f"F1 Score (Macro) = {f1_score_macro}")
+test_dataset['multilabel_pred'] = multilabel_pred
+test_dataset['multilabel_prod'] = multilabel_prod
 
-new_df['prediction'] = binary_output
-new_df['probability'] = logits
+test_dataset.to_csv('./results/multilabel_pred_results.csv')
 
-new_df.to_csv('pred_results.csv')
+# labels_array = MultiLabelBinarizer().fit_transform(test_dataset['list'])
+# preds_array = MultiLabelBinarizer().fit_transform(test_dataset['pred_list'])
+
+
+multilabel_f1_score_micro = metrics.f1_score(targets, multilabel_pred, average='micro')
+multilabel_f1_score_macro = metrics.f1_score(targets, multilabel_pred, average='macro')
+print(f"multilabel F1 Score (Micro) = {multilabel_f1_score_micro}")
+print(f"multilabel F1 Score (Macro) = {multilabel_f1_score_macro}")
