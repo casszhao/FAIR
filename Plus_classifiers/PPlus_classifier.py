@@ -8,18 +8,21 @@ from transformers import BertTokenizer, BertModel, BertConfig
 from torch import cuda
 device = 'cuda' if cuda.is_available() else 'cpu'
 
-test = False
+test = True
 
 # define hypeparameters
 
 if test == True:
     MAX_LEN = 20
+    EPOCHS = 1
+    new_df=new_df.sample(20)
 else:
-    MAX_LEN = 200
+    MAX_LEN = 500
+    EPOCHS = 3
 
-TRAIN_BATCH_SIZE = 2
-VALID_BATCH_SIZE = 1
-EPOCHS = 3
+LABEL_NUM = 9
+TRAIN_BATCH_SIZE = 8
+VALID_BATCH_SIZE = 4
 LEARNING_RATE = 1e-05
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 
@@ -193,7 +196,7 @@ multilabel_pred = np.array(multilabel_prod) >= 0.5
 test_dataset['multilabel_pred'] = multilabel_pred
 test_dataset['multilabel_prod'] = multilabel_prod
 
-test_dataset.to_csv('./results/multilabel_pred_results.csv')
+test_dataset.to_csv('../results/multilabel_pred_results.csv')
 
 # labels_array = MultiLabelBinarizer().fit_transform(test_dataset['list'])
 # preds_array = MultiLabelBinarizer().fit_transform(test_dataset['pred_list'])
