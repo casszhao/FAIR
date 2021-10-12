@@ -12,19 +12,6 @@ test = True
 
 # define hypeparameters
 
-if test == True:
-    MAX_LEN = 20
-    EPOCHS = 1
-    new_df=new_df.sample(20)
-else:
-    MAX_LEN = 500
-    EPOCHS = 3
-
-LABEL_NUM = 9
-TRAIN_BATCH_SIZE = 8
-VALID_BATCH_SIZE = 4
-LEARNING_RATE = 1e-05
-tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 
 
 # laod data
@@ -57,6 +44,20 @@ print(new_df.head())
 
 list_of_label = ['PlaceOfResidence','RaceEthnicity','Occupation','GenderSex','Religion', 'Education','SocioeconomicStatus', 'SocialCapital','Plus']
 
+
+if test == True:
+    MAX_LEN = 20
+    EPOCHS = 1
+    new_df=new_df.sample(20)
+else:
+    MAX_LEN = 500
+    EPOCHS = 3
+
+LABEL_NUM = 9
+TRAIN_BATCH_SIZE = 8
+VALID_BATCH_SIZE = 4
+LEARNING_RATE = 1e-05
+tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 
 class CustomDataset(Dataset):
     def __init__(self, dataframe, tokenizer, max_len):
