@@ -193,6 +193,7 @@ def validation_multilabel(model):
 
 multilabel_prod, targets = validation_multilabel(model)
 multilabel_pred = np.array(multilabel_prod) >= 0.5
+multilabel_pred = multilabel_pred.astype(int)
 
 print('multilabel_pred')
 print(len(multilabel_pred))
