@@ -126,7 +126,7 @@ testing_loader = DataLoader(testing_set, **test_params)
 
 class BERT_multilabel(torch.nn.Module):
     def __init__(self):
-        super(BERTClass, self).__init__()
+        super(BERT_multilabel, self).__init__()
         self.l1 = transformers.BertModel.from_pretrained('bert-base-uncased')
         self.l2 = torch.nn.Dropout(0.3)
         self.l3 = torch.nn.Linear(768, LABEL_NUM)
@@ -194,8 +194,12 @@ def validation_multilabel(model):
 multilabel_prod, targets = validation_multilabel(model)
 multilabel_pred = np.array(multilabel_prod) >= 0.5
 
-test_dataset['multilabel_pred'] = multilabel_pred
+print('multilabel_pred')
+print(len(multilabel_pred))
+print(multilabel_pred)
+
 test_dataset['multilabel_prod'] = multilabel_prod
+test_dataset['multilabel_pred'] = multilabel_pred
 
 test_dataset.to_csv('../results/multilabel_pred_results.csv')
 
