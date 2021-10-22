@@ -188,7 +188,7 @@ multilabel_pred = [[np.round(float(i)) for i in nested] for nested in multilabel
 test_dataset['multilabel_prod'] = pd.Series(multilabel_prod)
 test_dataset['multilabel_pred'] = multilabel_pred
 
-test_dataset.to_csv('../results/multilabel_pred_results.csv')
+test_dataset.to_csv('./results/multilabel_pred_results.csv')
 
 
 multilabel_f1_score_micro = metrics.f1_score(targets, multilabel_pred, average='micro')
