@@ -11,7 +11,7 @@ import torch.nn.functional as F
 device = 'cuda' if cuda.is_available() else 'cpu'
 
 
-test = True
+# test = True
 
 
 # laod data
@@ -36,13 +36,15 @@ if test == True:
     MAX_LEN = 20
     EPOCHS = 1
     new_df=new_df.sample(20)
+    TRAIN_BATCH_SIZE = 8
+    VALID_BATCH_SIZE = 4
 else:
     MAX_LEN = 500
     EPOCHS = 3
+    TRAIN_BATCH_SIZE = 16
+    VALID_BATCH_SIZE = 8
 
 LABEL_NUM = 9
-TRAIN_BATCH_SIZE = 8
-VALID_BATCH_SIZE = 4
 LEARNING_RATE = 1e-05
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 
@@ -174,7 +176,6 @@ for i, label in enumerate(list_of_label):
   model.to(device)
   optimizer = torch.optim.Adam(params =  model.parameters(), lr=LEARNING_RATE)
   label_index = i
-
 
   for epoch in range(EPOCHS):
     train_binary(epoch, label_index, model, optimizer)
