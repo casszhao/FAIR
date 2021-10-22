@@ -210,4 +210,4 @@ binary_f1_score_macro = metrics.f1_score(all_targets, binary_pred, average='macr
 print(f"binary F1 Score (Micro) = {binary_f1_score_micro}")
 print(f"binary F1 Score (Macro) = {binary_f1_score_macro}")
 
-test_dataset.to_csv('../results/binary_pred_results.csv')
+test_dataset.to_csv('./results/binary_pred_results.csv')
