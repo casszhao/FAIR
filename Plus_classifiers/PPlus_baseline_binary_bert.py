@@ -15,27 +15,14 @@ test = True
 
 
 # laod data
-url = 'https://raw.githubusercontent.com/casszhao/FAIR/main/sources/PROGRESSSample.tsv'
-df = pd.read_csv(url, sep='\t', usecols=['PaperTitle', 'Abstract', 'PlaceOfResidence','RaceEthnicity','Occupation','GenderSex','Religion',
-                                         'Education','SocioeconomicStatus', 'SocialCapital','Plus'])
+# url = 'https://raw.githubusercontent.com/casszhao/FAIR/main/sources/PROGRESSSample.tsv'
+df = pd.read_csv('../sources/ProgressTrainingCombined.tsv', sep='\t',
+                 usecols=['PaperTitle', 'Abstract', 'Place','Race','Occupation','Gender','Religion',
+                 'Education','Socioeconomic', 'Social','Plus'])
 
-
-df['text'] = df.PaperTitle + ' ' + df.Abstract
-
-df.loc[df.PlaceOfResidence != '0', 'PlaceOfResidence'] = 1
-df.loc[df.RaceEthnicity != '0', 'RaceEthnicity'] = 1
-df.loc[df.Occupation != '0', 'Occupation'] = 1
-df.loc[df.GenderSex != '0', 'GenderSex'] = 1
-df.loc[df.Religion != '0', 'Religion'] = 1
-df.loc[df.Education != '0', 'Education'] = 1
-df.loc[df.SocioeconomicStatus != '0', 'SocioeconomicStatus'] = 1
-df.loc[df.SocialCapital != '0', 'SocialCapital'] = 1
-df.loc[df.Plus != '0', 'Plus'] = 1
-df[['PlaceOfResidence','RaceEthnicity','Occupation','GenderSex','Religion', 'Education','SocioeconomicStatus', 'SocialCapital','Plus']] = df[['PlaceOfResidence', 'RaceEthnicity','Occupation','GenderSex','Religion',
-                                                                                                                                          'Education','SocioeconomicStatus', 'SocialCapital','Plus']].apply(pd.to_numeric)
 print(df.head())
 
-
+df['text'] = df.PaperTitle + ' ' + df.Abstract
 df['list'] = df[df.columns[2:11]].values.tolist()
 new_df = df[['text', 'list']].copy()
 list_of_label = ['PlaceOfResidence','RaceEthnicity','Occupation','GenderSex','Religion', 'Education','SocioeconomicStatus', 'SocialCapital','Plus']
@@ -217,10 +204,6 @@ all_targets = all_targets.reshape(len(test_dataset),len(list_of_label)).tolist()
 test_dataset['binary_pred'] = binary_pred
 test_dataset['binary_prob'] = binary_prob
 
-# labels_array = MultiLabelBinarizer().fit_transform(test_dataset['list'])
-# preds_array = MultiLabelBinarizer().fit_transform(test_dataset['pred_list'])
-print(all_targets)
-print(binary_pred)
 binary_f1_score_micro = metrics.f1_score(all_targets, binary_pred, average='micro')
 binary_f1_score_macro = metrics.f1_score(all_targets, binary_pred, average='macro')
 print(f"binary F1 Score (Micro) = {binary_f1_score_micro}")

@@ -16,21 +16,10 @@ test = True
 
 # laod data
 url = 'https://raw.githubusercontent.com/casszhao/FAIR/main/sources/PROGRESSSample.tsv'
-df = pd.read_csv(url, sep='\t', usecols=['PaperTitle', 'Abstract', 'PlaceOfResidence','RaceEthnicity','Occupation','GenderSex','Religion',
-                                         'Education','SocioeconomicStatus', 'SocialCapital','Plus'])
+df = pd.read_csv('../sources/ProgressTrainingCombined.tsv', sep='\t',
+                 usecols=['PaperTitle', 'Abstract', 'Place','Race','Occupation','Gender','Religion',
+                 'Education','Socioeconomic', 'Social','Plus'])
 df['text'] = df.PaperTitle + ' ' + df.Abstract
-
-df.loc[df.PlaceOfResidence != '0', 'PlaceOfResidence'] = 1
-df.loc[df.RaceEthnicity != '0', 'RaceEthnicity'] = 1
-df.loc[df.Occupation != '0', 'Occupation'] = 1
-df.loc[df.GenderSex != '0', 'GenderSex'] = 1
-df.loc[df.Religion != '0', 'Religion'] = 1
-df.loc[df.Education != '0', 'Education'] = 1
-df.loc[df.SocioeconomicStatus != '0', 'SocioeconomicStatus'] = 1
-df.loc[df.SocialCapital != '0', 'SocialCapital'] = 1
-df.loc[df.Plus != '0', 'Plus'] = 1
-df[['PlaceOfResidence','RaceEthnicity','Occupation','GenderSex','Religion', 'Education','SocioeconomicStatus', 'SocialCapital','Plus']] = df[['PlaceOfResidence', 'RaceEthnicity','Occupation','GenderSex','Religion',
-                                                                                                                                          'Education','SocioeconomicStatus', 'SocialCapital','Plus']].apply(pd.to_numeric)
 print(df.head())
 
 
@@ -192,20 +181,12 @@ def validation_multilabel(model):
 
 
 multilabel_prod, targets = validation_multilabel(model)
-multilabel_pred = np.array(multilabel_prod) >= 0.5
-multilabel_pred = multilabel_pred.astype(int)
+multilabel_pred = [[np.round(float(i)) for i in nested] for nested in multilabel_prod]
 
-print('multilabel_pred')
-print(len(multilabel_pred))
-print(multilabel_pred)
-
-test_dataset['multilabel_prod'] = multilabel_prod
+test_dataset['multilabel_prod'] = pd.Series(multilabel_prod)
 test_dataset['multilabel_pred'] = multilabel_pred
 
 test_dataset.to_csv('../results/multilabel_pred_results.csv')
-
-# labels_array = MultiLabelBinarizer().fit_transform(test_dataset['list'])
-# preds_array = MultiLabelBinarizer().fit_transform(test_dataset['pred_list'])
 
 
 multilabel_f1_score_micro = metrics.f1_score(targets, multilabel_pred, average='micro')
