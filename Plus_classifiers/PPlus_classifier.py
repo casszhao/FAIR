@@ -15,8 +15,8 @@ device = 'cuda' if cuda.is_available() else 'cpu'
 
 
 # laod data
-url = 'https://raw.githubusercontent.com/casszhao/FAIR/main/sources/PROGRESSSample.tsv'
-df = pd.read_csv('../sources/ProgressTrainingCombined.tsv', sep='\t',
+# url = 'https://raw.githubusercontent.com/casszhao/FAIR/main/sources/PROGRESSSample.tsv'
+df = pd.read_csv('./sources/ProgressTrainingCombined.tsv', sep='\t',
                  usecols=['PaperTitle', 'Abstract', 'Place','Race','Occupation','Gender','Religion',
                  'Education','Socioeconomic', 'Social','Plus'])
 df['text'] = df.PaperTitle + ' ' + df.Abstract
