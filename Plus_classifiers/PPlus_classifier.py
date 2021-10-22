@@ -8,7 +8,7 @@ from transformers import BertTokenizer, BertModel, BertConfig
 from torch import cuda
 device = 'cuda' if cuda.is_available() else 'cpu'
 
-# test = True
+test = False
 
 # define hypeparameters
 
