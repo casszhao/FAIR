@@ -11,12 +11,12 @@ import torch.nn.functional as F
 device = 'cuda' if cuda.is_available() else 'cpu'
 
 
-# test = True
+test = False
 
 
 # laod data
 # url = 'https://raw.githubusercontent.com/casszhao/FAIR/main/sources/PROGRESSSample.tsv'
-df = pd.read_csv('../sources/ProgressTrainingCombined.tsv', sep='\t',
+df = pd.read_csv('./sources/ProgressTrainingCombined.tsv', sep='\t',
                  usecols=['PaperTitle', 'Abstract', 'Place','Race','Occupation','Gender','Religion',
                  'Education','Socioeconomic', 'Social','Plus'])
 
