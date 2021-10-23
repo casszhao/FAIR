@@ -168,7 +168,7 @@ def train_multilabel(epoch):
         optimizer.zero_grad()
         loss = loss_fn(outputs, targets)
 
-        if _ % 50 == 0:
+        if _ % 100 == 0:
             global lowest_loss
             if loss <= lowest_loss: # loss go down, update best loss and keep training
                 lowest_loss = loss
