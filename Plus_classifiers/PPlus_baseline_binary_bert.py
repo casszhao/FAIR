@@ -106,8 +106,8 @@ train_dataset = train_dataset.reset_index(drop=True)
 
 
 print("FULL Dataset: {}".format(new_df.shape))
-print("TRAIN Dataset: {}".format(train_dataset.shape))
-print("TEST Dataset: {}".format(test_dataset.shape))
+print("TRAIN Dataset: {}, testing batch size: {}, testing batch size: {}".format(train_dataset.shape, TRAIN_BATCH_SIZE, VALID_BATCH_SIZE))
+print("TEST Dataset: {}, testing batch size: {}, testing batch size: {}".format(test_dataset.shape, TRAIN_BATCH_SIZE, VALID_BATCH_SIZE))
 
 training_set = CustomDataset(train_dataset, tokenizer, MAX_LEN)
 testing_set = CustomDataset(test_dataset, tokenizer, MAX_LEN)
@@ -210,8 +210,6 @@ for i, label in enumerate(list_of_label):
     binary_prob = np.concatenate([binary_prob, outputs])
     print('-------before concatenate---------')
     print(all_targets)
-
-
     all_targets = np.concatenate([all_targets, targets])
     print('-------after---------')
     print(all_targets)

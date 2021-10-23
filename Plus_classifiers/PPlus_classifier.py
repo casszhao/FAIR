@@ -1,3 +1,4 @@
+import argparse
 import numpy as np
 import pandas as pd
 from sklearn import metrics
@@ -39,6 +40,7 @@ if args.test == True:
     VALID_BATCH_SIZE = 4
     TRAIN_BATCH_SIZE = 8
     MAX_LEN = 20
+    results_directory = '../results/binary_pred_results.csv'
 
 else:
     df = pd.read_csv('./sources/ProgressTrainingCombined.tsv', sep='\t',
@@ -50,61 +52,11 @@ else:
     results_directory = './results/binary_pred_results.csv'
     VALID_BATCH_SIZE = 16
     TRAIN_BATCH_SIZE = args.train_batch_size
+    results_directory = './results/binary_pred_results.csv'
 
 LABEL_NUM = 9
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-
-
-
-
-
-
-
-
-
-
-
-
-
-# define hypeparameters
-
-
-
-# laod data
-# url = 'https://raw.githubusercontent.com/casszhao/FAIR/main/sources/PROGRESSSample.tsv'
-df = pd.read_csv('./sources/ProgressTrainingCombined.tsv', sep='\t',
-                 usecols=['PaperTitle', 'Abstract', 'Place','Race','Occupation','Gender','Religion',
-                 'Education','Socioeconomic', 'Social','Plus'])
-df['text'] = df.PaperTitle + ' ' + df.Abstract
-print(df.head())
-
-
-df['list'] = df[df.columns[2:11]].values.tolist()
-LABEL_NUM = len(df['list'][5])
-print('label numbers: ', LABEL_NUM)
-# bool_list = list(map(bool,int_list))
-
-new_df = df[['text', 'list']].copy()
-print(new_df.head())
-
 list_of_label = ['PlaceOfResidence','RaceEthnicity','Occupation','GenderSex','Religion', 'Education','SocioeconomicStatus', 'SocialCapital','Plus']
-
-
-if test == True:
-    MAX_LEN = 20
-    EPOCHS = 1
-    new_df=new_df.sample(20)
-    TRAIN_BATCH_SIZE = 8
-    VALID_BATCH_SIZE = 4
-else:
-    MAX_LEN = 500
-    EPOCHS = 3
-    TRAIN_BATCH_SIZE = 16
-    VALID_BATCH_SIZE = 8
-
-LABEL_NUM = 9
-LEARNING_RATE = 1e-05
-tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 
 class CustomDataset(Dataset):
     def __init__(self, dataframe, tokenizer, max_len):
@@ -244,7 +196,7 @@ multilabel_pred = [[np.round(float(i)) for i in nested] for nested in multilabel
 test_dataset['multilabel_prod'] = pd.Series(multilabel_prod)
 test_dataset['multilabel_pred'] = multilabel_pred
 
-test_dataset.to_csv('./results/multilabel_pred_results.csv')
+test_dataset.to_csv(results_directory)
 
 
 multilabel_f1_score_micro = metrics.f1_score(targets, multilabel_pred, average='micro')
