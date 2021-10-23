@@ -196,49 +196,32 @@ for i, label in enumerate(list_of_label):
     label_index = i
 
     for epoch in range(EPOCHS):
-            train_binary(epoch, label_index, model, optimizer)
+        train_binary(epoch, label_index, model, optimizer)
 
     binary_prod, targets, text_list = validation_binary(epoch, model, label_index)
-
     binary_pred = np.array(binary_prod) >= 0.5
     binary_pred = binary_pred.astype(int)
+    print('new binary_prod')
+    print(binary_prod)
 
-    if i == 0:
-        temp_df = pd.DataFrame(list(zip(text_list, targets, binary_prod, binary_pred)),
-                               columns =['Text', 'targets_' + str(i), 'Pred_' + str(i), 'Prob_' + str(i)])
-        print(temp_df)
+    if i ==0:
+        binary_pred_array = binary_pred
+        binary_prob_array = binary_prod
+        all_targets_array = targets
+            # print('binary_pred ',binary_pred)
+            # print('binary_prob ',binary_prob)
     else:
-        new_temp_df = pd.DataFrame(list(zip(text_list, targets, binary_prod, binary_pred)),
-                               columns =['Text', 'targets_' + str(i), 'Pred_' + str(i), 'Prob_' + str(i)])
-        print(new_temp_df)
-        # temp_df = pd.merge(temp_df, new_temp_df, on='Text')
+        binary_pred_array = np.concatenate([binary_pred_array, binary_pred])
+        binary_prob_array = np.concatenate([binary_prob_array, binary_prod])
+        all_targets_array = np.concatenate([all_targets_array, targets])
 
 
-print(temp_df)
+binary_pred_list = np.transpose(binary_pred_array.reshape(len(list_of_label), len(test_dataset))).tolist()
+binary_prob_list = np.transpose(binary_prob_array.reshape(len(list_of_label), len(test_dataset))).tolist()
+all_targets_list = np.transpose(all_targets_array.reshape(len(list_of_label), len(test_dataset))).tolist()
 
-    # if i ==0:
-    #         binary_pred = pred
-    #         binary_prob = binary_prod
-    #         all_targets = targets
-    #         # print('binary_pred ',binary_pred)
-    #         # print('binary_prob ',binary_prob)
-    # else:
-    #         binary_pred = np.concatenate([binary_pred, pred])
-    #         binary_prob = np.concatenate([binary_prob, binary_prod])
-    #         print('-------before concatenate---------')
-    #         print(all_targets)
-    #         all_targets = np.concatenate([all_targets, targets])
-    #         print('-------after---------')
-    #         print(all_targets)
-    #         # print('binary_pred ',binary_pred)
-    #         # print('binary_prob ',binary_prob)
-    #
-    # print(all_targets)
-    # binary_pred = binary_pred.reshape(len(test_dataset),len(list_of_label)).tolist()
-    # binary_prob = binary_prob.reshape(len(test_dataset),len(list_of_label)).tolist()
-    # all_targets = all_targets.reshape(len(test_dataset),len(list_of_label)).tolist()
-
-
+results_df = pd.DataFrame(list(zip(text_list,all_targets_list,binary_pred_list,binary_prob_list)),
+                               columns =['Text', 'Ground truth', 'Prediction', 'Probability'])
 # binary_f1_score_micro = metrics.f1_score(all_targets, binary_pred, average='micro')
 # binary_f1_score_macro = metrics.f1_score(all_targets, binary_pred, average='macro')
 # print(f"binary F1 Score (Micro) = {binary_f1_score_micro}")
