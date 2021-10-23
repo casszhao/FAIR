@@ -173,7 +173,7 @@ def train_multilabel(epoch):
             if loss <= lowest_loss: # loss go down, update best loss and keep training
                 lowest_loss = loss
             else:                   # loss is high or go up
-                if loss >= 0.5:     # if it is in initial rounds, where loss above 0.5, dont change lr
+                if loss >= 0.4:     # if it is in initial rounds, where loss above 0.5, dont change lr
                     pass
                 else: # loss below 0.5 but higher than best loss ==> loss go down, need to half lr
                     global LEARNING_RATE
@@ -210,6 +210,7 @@ def validation_multilabel(model):
     with torch.no_grad():
         for _, data in enumerate(testing_loader, 0):
             text = data['text']
+            text_list = text_list + text
             ids = data['ids'].to(device, dtype = torch.long)
             mask = data['mask'].to(device, dtype = torch.long)
             token_type_ids = data['token_type_ids'].to(device, dtype = torch.long)
@@ -217,7 +218,7 @@ def validation_multilabel(model):
             outputs = model(ids, mask, token_type_ids)
             fin_targets.extend(targets.cpu().detach().numpy().tolist())
             fin_outputs.extend(torch.sigmoid(outputs).cpu().detach().numpy().tolist())
-            text_list = text_list + text
+
     return fin_outputs, fin_targets, text_list
 
 
@@ -228,7 +229,7 @@ testing_results = pd.DataFrame(list(zip(text_list, targets, multilabel_pred, mul
                                columns =['Text', 'Ground truth', 'Prediction', 'Probability'])
 
 
-results_df_name = str(args.epoch) + 'len_' + str(args.train_batch_size) + 'b_' + 'multilabel_results.csv'
+results_df_name = str(args.max_len) + 'len_' + str(args.train_batch_size) + 'b_' + 'multilabel_results.csv'
 testing_results.to_csv(results_directory + results_df_name)
 
 

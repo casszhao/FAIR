@@ -35,7 +35,7 @@ if args.test == True:
     df['list'] = df[df.columns[2:11]].values.tolist()
     new_df = df[['text', 'list']].copy()
     new_df = new_df.sample(200)
-    results_directory = '../results/binary_pred_results.csv'
+    results_directory = '../results/'
     VALID_BATCH_SIZE = 4
     TRAIN_BATCH_SIZE = 8
     MAX_LEN = 20
@@ -47,7 +47,7 @@ else:
     df['text'] = df.PaperTitle + ' ' + df.Abstract
     df['list'] = df[df.columns[2:11]].values.tolist()
     new_df = df[['text', 'list']].copy()
-    results_directory = './results/binary_pred_results.csv'
+    results_directory = './results/'
     VALID_BATCH_SIZE = 16
     TRAIN_BATCH_SIZE = args.train_batch_size
 
@@ -163,8 +163,11 @@ def validation_binary(epoch,model_name,label_index):
     model.eval()
     fin_targets=[]
     fin_outputs=[]
+    text_list = []
     with torch.no_grad():
         for _, data in enumerate(testing_loader, 0):
+            text = data['text']
+            text_list = text_list + text
             ids = data['ids'].to(device, dtype = torch.long)
             mask = data['mask'].to(device, dtype = torch.long)
             token_type_ids = data['token_type_ids'].to(device, dtype = torch.long)
@@ -181,7 +184,7 @@ def validation_binary(epoch,model_name,label_index):
 
             logits = F.softmax(outputs.logits, dim=-1)[:,1]
             fin_outputs.extend(logits.cpu().detach().numpy().tolist())
-    return fin_outputs, targets_1d.cpu().detach().numpy().tolist()
+    return fin_outputs, targets_1d.cpu().detach().numpy().tolist(), text_list
 
 
 f1_list = []
@@ -229,4 +232,6 @@ binary_f1_score_micro = metrics.f1_score(all_targets, binary_pred, average='micr
 binary_f1_score_macro = metrics.f1_score(all_targets, binary_pred, average='macro')
 print(f"binary F1 Score (Micro) = {binary_f1_score_micro}")
 print(f"binary F1 Score (Macro) = {binary_f1_score_macro}")
-test_dataset.to_csv(results_directory)
+
+results_df_name = str(args.max_len) + 'len_' + str(args.train_batch_size) + 'b_' + 'binary_results.csv'
+testing_results.to_csv(results_directory + results_df_name)
