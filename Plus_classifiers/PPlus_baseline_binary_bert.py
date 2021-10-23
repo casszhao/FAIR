@@ -11,7 +11,7 @@ import torch.nn.functional as F
 device = 'cuda' if cuda.is_available() else 'cpu'
 
 
-test = True
+test = False
 
 if test == True:
     MAX_LEN = 20
