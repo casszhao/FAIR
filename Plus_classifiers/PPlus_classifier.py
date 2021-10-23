@@ -153,7 +153,7 @@ def loss_fn(outputs, targets):
 model = BERT_multilabel()
 model.to(device)
 optimizer = torch.optim.Adam(params=model.parameters(), lr=LEARNING_RATE)
-lowest_loss = 0.9
+lowest_loss = 0.5
 
 def train_multilabel(epoch):
 
