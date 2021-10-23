@@ -196,6 +196,7 @@ optimizer = torch.optim.Adam(params=model.parameters(), lr=LEARNING_RATE)
 #         optimizer.step()
 
 def train_multilabel(epoch):
+    print(epoch)
 
     model.train()
     for _, data in enumerate(training_loader, 0):
@@ -210,6 +211,7 @@ def train_multilabel(epoch):
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
+    print(loss)
 
 for epoch in range(EPOCHS):
     train_multilabel(epoch)
@@ -264,6 +266,7 @@ def one_label_f1(label_index):
     f1 = f1_score(true_label, pred_label)
     return label_name, f1
 
+print('---------------------')
 for i, label in enumerate(list_of_label):
     label_name, f1 = one_label_f1(i)
     print(label_name, f1)
