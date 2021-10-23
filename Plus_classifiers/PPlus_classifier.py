@@ -170,19 +170,23 @@ def train_multilabel(epoch):
 
         if _ % 50 == 0:
             global lowest_loss
-            if loss <= lowest_loss:
+            if loss <= lowest_loss: # loss go down, update best loss and keep training
                 lowest_loss = loss
-            else:
-                global LEARNING_RATE
-                if LEARNING_RATE <= args.learning_rate/32:
-                    break
-                else:
-                    # global LEARNING_RATE
-                    LEARNING_RATE = LEARNING_RATE/2
-                    print(epoch, 'EPOCH   current loss is: ',loss )
-                    print(' half learning rate, new learning rate: ', LEARNING_RATE)
-                    for param_group in optimizer.param_groups:
-                        param_group['lr'] = LEARNING_RATE
+            else:                   # loss is high or go up
+                if loss >= 0.5:     # if it is in initial rounds, where loss above 0.5, dont change lr
+                    pass
+                else: # loss below 0.5 but higher than best loss ==> loss go down, need to half lr
+                    global LEARNING_RATE
+                    if LEARNING_RATE <= args.learning_rate/32: # already half 5 times
+                        break
+                        print('stop training for 5 times half')
+                    else:
+                        # global LEARNING_RATE
+                        LEARNING_RATE = LEARNING_RATE/2
+                        print(epoch, 'EPOCH   current loss is: ',loss )
+                        print(' half learning rate, new learning rate: ', LEARNING_RATE)
+                        for param_group in optimizer.param_groups:
+                            param_group['lr'] = LEARNING_RATE
         # if _ % 5000 == 0:
         #     print(f'Epoch: {epoch}, Loss:  {loss.item()}')
 
