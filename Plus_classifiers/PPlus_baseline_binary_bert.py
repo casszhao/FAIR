@@ -208,12 +208,14 @@ for i, label in enumerate(list_of_label):
         binary_pred_array = binary_pred
         binary_prob_array = binary_prod
         all_targets_array = targets
+        print(len(all_targets_array))
             # print('binary_pred ',binary_pred)
             # print('binary_prob ',binary_prob)
     else:
         binary_pred_array = np.concatenate([binary_pred_array, binary_pred])
         binary_prob_array = np.concatenate([binary_prob_array, binary_prod])
         all_targets_array = np.concatenate([all_targets_array, targets])
+        print(len(all_targets_array))
 
 print(all_targets_array)
 binary_pred_list = np.transpose(binary_pred_array.reshape(len(list_of_label), len(test_dataset))).tolist()
