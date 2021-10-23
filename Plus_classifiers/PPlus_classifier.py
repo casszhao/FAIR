@@ -2,6 +2,7 @@ import argparse
 import numpy as np
 import pandas as pd
 from sklearn import metrics
+from sklearn.metrics import f1_score
 import transformers
 import torch
 from torch.utils.data import Dataset, DataLoader, RandomSampler, SequentialSampler
@@ -14,8 +15,8 @@ device = 'cuda' if cuda.is_available() else 'cpu'
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--test", default = False, action='store_true')
-parser.add_argument("--epoch", "-e", default=3, type=int)
-parser.add_argument("--max_len", "-m", default=500, type=int)
+parser.add_argument("--epoch", "-e", default=5, type=int)
+parser.add_argument("--max_len", "-m", default=600, type=int)
 parser.add_argument("--learning_rate", "-l", default=1e-05, action = 'store_true')
 parser.add_argument("--train_batch_size", "-t", default=16, type=int)
 # parser.add_argument("--", "-t", default=16, type=int, action = 'store_true')
@@ -35,12 +36,12 @@ if args.test == True:
     df['text'] = df.PaperTitle + ' ' + df.Abstract
     df['list'] = df[df.columns[2:11]].values.tolist()
     new_df = df[['text', 'list']].copy()
-    new_df = new_df.sample(200)
-    results_directory = '../results/binary_pred_results.csv'
+    new_df = new_df.sample(150)
+    results_directory = '../results/'
     VALID_BATCH_SIZE = 4
     TRAIN_BATCH_SIZE = 8
     MAX_LEN = 20
-    results_directory = '../results/binary_pred_results.csv'
+    results_directory = '../results/'
 
 else:
     df = pd.read_csv('./sources/ProgressTrainingCombined.tsv', sep='\t',
@@ -49,14 +50,16 @@ else:
     df['text'] = df.PaperTitle + ' ' + df.Abstract
     df['list'] = df[df.columns[2:11]].values.tolist()
     new_df = df[['text', 'list']].copy()
-    results_directory = './results/binary_pred_results.csv'
+    results_directory = './results/'
     VALID_BATCH_SIZE = 16
     TRAIN_BATCH_SIZE = args.train_batch_size
-    results_directory = './results/binary_pred_results.csv'
+    results_directory = './results/'
 
+
+print(df.mean())
 LABEL_NUM = 9
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-list_of_label = ['PlaceOfResidence','RaceEthnicity','Occupation','GenderSex','Religion', 'Education','SocioeconomicStatus', 'SocialCapital','Plus']
+list_of_label = ['Place', 'Race', 'Occupation', 'Gender', 'Religion', 'Education', 'Socioeconomic', 'Social', 'Plus']
 
 class CustomDataset(Dataset):
     def __init__(self, dataframe, tokenizer, max_len):
@@ -89,7 +92,8 @@ class CustomDataset(Dataset):
             'ids': torch.tensor(ids, dtype=torch.long),
             'mask': torch.tensor(mask, dtype=torch.long),
             'token_type_ids': torch.tensor(token_type_ids, dtype=torch.long),
-            'targets': torch.tensor(self.targets[index], dtype=torch.float)
+            'targets': torch.tensor(self.targets[index], dtype=torch.float),
+            'text': text
         }
 
 
@@ -115,7 +119,7 @@ train_params = {'batch_size': TRAIN_BATCH_SIZE,
                 }
 
 test_params = {'batch_size': VALID_BATCH_SIZE,
-                'shuffle': True,
+                'shuffle': False,
                 'num_workers': 0
                 }
 
@@ -178,8 +182,10 @@ def validation_multilabel(model):
     model.eval()
     fin_targets=[]
     fin_outputs=[]
+    text_list = []
     with torch.no_grad():
         for _, data in enumerate(testing_loader, 0):
+            text = data['text']
             ids = data['ids'].to(device, dtype = torch.long)
             mask = data['mask'].to(device, dtype = torch.long)
             token_type_ids = data['token_type_ids'].to(device, dtype = torch.long)
@@ -187,19 +193,44 @@ def validation_multilabel(model):
             outputs = model(ids, mask, token_type_ids)
             fin_targets.extend(targets.cpu().detach().numpy().tolist())
             fin_outputs.extend(torch.sigmoid(outputs).cpu().detach().numpy().tolist())
-    return fin_outputs, fin_targets
+            text_list = text_list + text
+    return fin_outputs, fin_targets, text_list
 
 
-multilabel_prod, targets = validation_multilabel(model)
+multilabel_prod, targets, text_list = validation_multilabel(model)
 multilabel_pred = [[np.round(float(i)) for i in nested] for nested in multilabel_prod]
 
-test_dataset['multilabel_prod'] = pd.Series(multilabel_prod)
-test_dataset['multilabel_pred'] = multilabel_pred
+testing_results = pd.DataFrame(list(zip(text_list, targets, multilabel_pred, multilabel_prod)),
+                               columns =['Text', 'Ground truth', 'Prediction', 'Probability'])
 
-test_dataset.to_csv(results_directory)
+
+results_df_name = str(args.epoch) + 'e_' + str(args.max_len) + 'len_' + str(args.train_batch_size) + 'b_' + 'multilabel_results.csv'
+testing_results.to_csv(results_directory + results_df_name)
 
 
 multilabel_f1_score_micro = metrics.f1_score(targets, multilabel_pred, average='micro')
 multilabel_f1_score_macro = metrics.f1_score(targets, multilabel_pred, average='macro')
+
+multilabel_pred_array = np.array(multilabel_pred)
+targets_array = np.array(targets)
+def one_label_f1(label_index):
+    label_name = list_of_label[label_index]
+    pred_label = multilabel_pred_array[:, label_index]
+    true_label = targets_array[:, label_index]
+    # print(len(true_label))
+    # print(true_label)
+    # print(len(pred_label))
+    # print(pred_label)
+    f1 = f1_score(true_label, pred_label)
+    return label_name, f1
+
+for i, label in enumerate(list_of_label):
+    label_name, f1 = one_label_f1(i)
+    print(label_name, f1)
+
+
+# usecols list_of_label = ['Place', 'Race', 'Occupation', 'Gender', 'Religion',
+#            'Education', 'Socioeconomic', 'Social', 'Plus']
+
 print(f"multilabel F1 Score (Micro) = {multilabel_f1_score_micro}")
 print(f"multilabel F1 Score (Macro) = {multilabel_f1_score_macro}")

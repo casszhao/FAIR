@@ -2,6 +2,7 @@ import argparse
 import numpy as np
 import pandas as pd
 from sklearn import metrics
+from sklearn.metrics import f1_score
 import transformers
 import torch
 from torch.utils.data import Dataset, DataLoader, RandomSampler, SequentialSampler
@@ -183,7 +184,7 @@ def validation_binary(epoch,model_name,label_index):
     return fin_outputs, targets_1d.cpu().detach().numpy().tolist()
 
 
-
+f1_list = []
 for i, label in enumerate(list_of_label):
 
   model = BertForSequenceClassification.from_pretrained('bert-base-uncased')
