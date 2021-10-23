@@ -153,7 +153,7 @@ def loss_fn(outputs, targets):
 model = BERT_multilabel()
 model.to(device)
 optimizer = torch.optim.Adam(params=model.parameters(), lr=LEARNING_RATE)
-lowest_loss = 0.5
+lowest_loss = 0.4
 
 def train_multilabel(epoch):
 
@@ -168,7 +168,7 @@ def train_multilabel(epoch):
         optimizer.zero_grad()
         loss = loss_fn(outputs, targets)
 
-        if _ % 100 == 0:
+        if _ % 44 == 0:
             global lowest_loss
             if loss <= lowest_loss: # loss go down, update best loss and keep training
                 lowest_loss = loss
