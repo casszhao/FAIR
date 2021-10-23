@@ -179,8 +179,8 @@ def train_multilabel(epoch):
                 else:
                     # global LEARNING_RATE
                     LEARNING_RATE = LEARNING_RATE/2
-                    print(' half learning rate, current learning rate: ', LEARNING_RATE)
                     print(epoch, 'EPOCH   current loss is: ',loss )
+                    print(' half learning rate, new learning rate: ', LEARNING_RATE)
                     for param_group in optimizer.param_groups:
                         param_group['lr'] = LEARNING_RATE
         # if _ % 5000 == 0:
