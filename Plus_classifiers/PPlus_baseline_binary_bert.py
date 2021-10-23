@@ -201,8 +201,8 @@ for i, label in enumerate(list_of_label):
     binary_prod, targets, text_list = validation_binary(epoch, model, label_index)
     binary_pred = np.array(binary_prod) >= 0.5
     binary_pred = binary_pred.astype(int)
-    print('new binary_prod')
-    print(binary_prod)
+    # print('new binary_prod')
+    # print(binary_prod)
 
     if i ==0:
         binary_pred_array = binary_pred
@@ -222,10 +222,36 @@ all_targets_list = np.transpose(all_targets_array.reshape(len(list_of_label), le
 
 results_df = pd.DataFrame(list(zip(text_list,all_targets_list,binary_pred_list,binary_prob_list)),
                                columns =['Text', 'Ground truth', 'Prediction', 'Probability'])
-# binary_f1_score_micro = metrics.f1_score(all_targets, binary_pred, average='micro')
-# binary_f1_score_macro = metrics.f1_score(all_targets, binary_pred, average='macro')
-# print(f"binary F1 Score (Micro) = {binary_f1_score_micro}")
-# print(f"binary F1 Score (Macro) = {binary_f1_score_macro}")
-#
-# results_df_name = str(args.max_len) + 'len_' + str(args.train_batch_size) + 'b_' + 'binary_results.csv'
-# testing_results.to_csv(results_directory + results_df_name)
+
+
+results_df_name = str(args.max_len) + 'len_' + str(args.train_batch_size) + 'b_' + str(args.epoch) + 'e_'+ 'binary_results.csv'
+results_df.to_csv(results_directory + results_df_name)
+
+
+binary_f1_score_micro = metrics.f1_score(all_targets_array, binary_pred_array, average='micro')
+binary_f1_score_macro = metrics.f1_score(all_targets_array, binary_pred_array, average='macro')
+
+multilabel_pred_array = np.array(multilabel_pred)
+targets_array = np.array(targets)
+
+def one_label_f1(label_index):
+    label_name = list_of_label[label_index]
+    pred_label = binary_pred_array[:, label_index]
+    true_label = all_targets_array[:, label_index]
+    # print(len(true_label))
+    # print(true_label)
+    # print(len(pred_label))
+    # print(pred_label)
+    f1 = f1_score(true_label, pred_label)
+    return label_name, f1
+
+for i, label in enumerate(list_of_label):
+    label_name, f1 = one_label_f1(i)
+    print(label_name, f1)
+
+
+# usecols list_of_label = ['Place', 'Race', 'Occupation', 'Gender', 'Religion',
+#            'Education', 'Socioeconomic', 'Social', 'Plus']
+
+print(f"binary F1 Score (Micro) = {binary_f1_score_micro}")
+print(f"binary F1 Score (Macro) = {binary_f1_score_macro}")
