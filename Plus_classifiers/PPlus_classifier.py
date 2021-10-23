@@ -153,7 +153,47 @@ def loss_fn(outputs, targets):
 model = BERT_multilabel()
 model.to(device)
 optimizer = torch.optim.Adam(params=model.parameters(), lr=LEARNING_RATE)
-lowest_loss = 0.4
+
+
+# def train_multilabel(epoch):
+#
+#     model.train()
+#     for _, data in enumerate(training_loader, 0):
+#         ids = data['ids'].to(device, dtype=torch.long)
+#         mask = data['mask'].to(device, dtype=torch.long)
+#         token_type_ids = data['token_type_ids'].to(device, dtype=torch.long)
+#         targets = data['targets'].to(device, dtype=torch.float)
+#         outputs = model(ids, mask, token_type_ids)
+#
+#         optimizer.zero_grad()
+#         loss = loss_fn(outputs, targets)
+#
+#         if _ % 44 == 0:
+#             global lowest_loss
+#             if loss <= lowest_loss: # loss go down, update best loss and keep training
+#                 lowest_loss = loss
+#             else:                   # loss is high or go up
+#                 if loss >= 0.4:     # if it is in initial rounds, where loss above 0.4, dont change lr
+#                     pass
+#                 else: # loss below 0.5 but higher than best loss ==> loss go down, need to half lr
+#                     global LEARNING_RATE
+#                     if LEARNING_RATE <= args.learning_rate/32: # already half 5 times
+#                         break
+#                         print('stop training for 5 times half')
+#                     else:
+#                         # global LEARNING_RATE
+#                         LEARNING_RATE = LEARNING_RATE/2
+#                         print(epoch, 'EPOCH   current loss is: ',loss )
+#                         print(' half learning rate, new learning rate: ', LEARNING_RATE)
+#                         for param_group in optimizer.param_groups:
+#                             param_group['lr'] = LEARNING_RATE
+#         # if _ % 5000 == 0:
+#         #     print(f'Epoch: {epoch}, Loss:  {loss.item()}')
+#
+#
+#         optimizer.zero_grad()
+#         loss.backward()
+#         optimizer.step()
 
 def train_multilabel(epoch):
 
@@ -167,38 +207,13 @@ def train_multilabel(epoch):
 
         optimizer.zero_grad()
         loss = loss_fn(outputs, targets)
-
-        if _ % 44 == 0:
-            global lowest_loss
-            if loss <= lowest_loss: # loss go down, update best loss and keep training
-                lowest_loss = loss
-            else:                   # loss is high or go up
-                if loss >= 0.4:     # if it is in initial rounds, where loss above 0.5, dont change lr
-                    pass
-                else: # loss below 0.5 but higher than best loss ==> loss go down, need to half lr
-                    global LEARNING_RATE
-                    if LEARNING_RATE <= args.learning_rate/32: # already half 5 times
-                        break
-                        print('stop training for 5 times half')
-                    else:
-                        # global LEARNING_RATE
-                        LEARNING_RATE = LEARNING_RATE/2
-                        print(epoch, 'EPOCH   current loss is: ',loss )
-                        print(' half learning rate, new learning rate: ', LEARNING_RATE)
-                        for param_group in optimizer.param_groups:
-                            param_group['lr'] = LEARNING_RATE
-        # if _ % 5000 == 0:
-        #     print(f'Epoch: {epoch}, Loss:  {loss.item()}')
-
-
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
 
 for epoch in range(EPOCHS):
     train_multilabel(epoch)
-    if LEARNING_RATE <= args.learning_rate / 32:
-        break
+
 
 # define validating
 def validation_multilabel(model):
@@ -229,7 +244,7 @@ testing_results = pd.DataFrame(list(zip(text_list, targets, multilabel_pred, mul
                                columns =['Text', 'Ground truth', 'Prediction', 'Probability'])
 
 
-results_df_name = str(args.max_len) + 'len_' + str(args.train_batch_size) + 'b_' + 'multilabel_results.csv'
+results_df_name = str(args.max_len) + 'len_' + str(args.train_batch_size) + 'b_' + str(args.epoch) + 'e_'+ 'multilabel_results.csv'
 testing_results.to_csv(results_directory + results_df_name)
 
 

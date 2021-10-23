@@ -96,7 +96,8 @@ class CustomDataset(Dataset):
             'ids': torch.tensor(ids, dtype=torch.long),
             'mask': torch.tensor(mask, dtype=torch.long),
             'token_type_ids': torch.tensor(token_type_ids, dtype=torch.long),
-            'targets': torch.tensor(self.targets[index], dtype=torch.float)
+            'targets': torch.tensor(self.targets[index], dtype=torch.float),
+            'text': text
         }
 # Creating the dataset and dataloader for the neural network
 
@@ -120,7 +121,7 @@ train_params = {'batch_size': TRAIN_BATCH_SIZE,
                 }
 
 test_params = {'batch_size': VALID_BATCH_SIZE,
-                'shuffle': True,
+                'shuffle': False,
                 'num_workers': 0
                 }
 
@@ -189,49 +190,59 @@ def validation_binary(epoch,model_name,label_index):
 
 f1_list = []
 for i, label in enumerate(list_of_label):
+    model = BertForSequenceClassification.from_pretrained('bert-base-uncased')
+    model.to(device)
+    optimizer = torch.optim.Adam(params =  model.parameters(), lr=LEARNING_RATE)
+    label_index = i
 
-  model = BertForSequenceClassification.from_pretrained('bert-base-uncased')
-  model.to(device)
-  optimizer = torch.optim.Adam(params =  model.parameters(), lr=LEARNING_RATE)
-  label_index = i
+    for epoch in range(EPOCHS):
+            train_binary(epoch, label_index, model, optimizer)
 
-  for epoch in range(EPOCHS):
-    train_binary(epoch, label_index, model, optimizer)
+    binary_prod, targets, text_list = validation_binary(epoch, model, label_index)
 
-  outputs, targets = validation_binary(epoch, model, label_index)
+    binary_pred = np.array(binary_prod) >= 0.5
+    binary_pred = binary_pred.astype(int)
 
-  pred = np.array(outputs) >= 0.5
-  pred = pred.astype(int)
+    if i == 0:
+        temp_df = pd.DataFrame(list(zip(text_list, targets, binary_prod, binary_pred)),
+                               columns =['Text', 'targets_' + str(i), 'Pred_' + str(i), 'Prob_' + str(i)])
+        print(temp_df)
+    else:
+        new_temp_df = pd.DataFrame(list(zip(text_list, targets, binary_prod, binary_pred)),
+                               columns =['Text', 'targets_' + str(i), 'Pred_' + str(i), 'Prob_' + str(i)])
+        print(new_temp_df)
+        # temp_df = pd.merge(temp_df, new_temp_df, on='Text')
 
-  if i ==0:
-    binary_pred = pred
-    binary_prob = outputs
-    all_targets = targets
-    # print('binary_pred ',binary_pred)
-    # print('binary_prob ',binary_prob)
-  else:
-    binary_pred = np.concatenate([binary_pred, pred])
-    binary_prob = np.concatenate([binary_prob, outputs])
-    print('-------before concatenate---------')
-    print(all_targets)
-    all_targets = np.concatenate([all_targets, targets])
-    print('-------after---------')
-    print(all_targets)
-    # print('binary_pred ',binary_pred)
-    # print('binary_prob ',binary_prob)
 
-print(all_targets)
-binary_pred = binary_pred.reshape(len(test_dataset),len(list_of_label)).tolist()
-binary_prob = binary_prob.reshape(len(test_dataset),len(list_of_label)).tolist()
-all_targets = all_targets.reshape(len(test_dataset),len(list_of_label)).tolist()
+print(temp_df)
 
-test_dataset['binary_pred'] = binary_pred
-test_dataset['binary_prob'] = binary_prob
+    # if i ==0:
+    #         binary_pred = pred
+    #         binary_prob = binary_prod
+    #         all_targets = targets
+    #         # print('binary_pred ',binary_pred)
+    #         # print('binary_prob ',binary_prob)
+    # else:
+    #         binary_pred = np.concatenate([binary_pred, pred])
+    #         binary_prob = np.concatenate([binary_prob, binary_prod])
+    #         print('-------before concatenate---------')
+    #         print(all_targets)
+    #         all_targets = np.concatenate([all_targets, targets])
+    #         print('-------after---------')
+    #         print(all_targets)
+    #         # print('binary_pred ',binary_pred)
+    #         # print('binary_prob ',binary_prob)
+    #
+    # print(all_targets)
+    # binary_pred = binary_pred.reshape(len(test_dataset),len(list_of_label)).tolist()
+    # binary_prob = binary_prob.reshape(len(test_dataset),len(list_of_label)).tolist()
+    # all_targets = all_targets.reshape(len(test_dataset),len(list_of_label)).tolist()
 
-binary_f1_score_micro = metrics.f1_score(all_targets, binary_pred, average='micro')
-binary_f1_score_macro = metrics.f1_score(all_targets, binary_pred, average='macro')
-print(f"binary F1 Score (Micro) = {binary_f1_score_micro}")
-print(f"binary F1 Score (Macro) = {binary_f1_score_macro}")
 
-results_df_name = str(args.max_len) + 'len_' + str(args.train_batch_size) + 'b_' + 'binary_results.csv'
-testing_results.to_csv(results_directory + results_df_name)
+# binary_f1_score_micro = metrics.f1_score(all_targets, binary_pred, average='micro')
+# binary_f1_score_macro = metrics.f1_score(all_targets, binary_pred, average='macro')
+# print(f"binary F1 Score (Micro) = {binary_f1_score_micro}")
+# print(f"binary F1 Score (Macro) = {binary_f1_score_macro}")
+#
+# results_df_name = str(args.max_len) + 'len_' + str(args.train_batch_size) + 'b_' + 'binary_results.csv'
+# testing_results.to_csv(results_directory + results_df_name)
