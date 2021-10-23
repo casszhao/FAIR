@@ -224,7 +224,7 @@ testing_results = pd.DataFrame(list(zip(text_list, targets, multilabel_pred, mul
                                columns =['Text', 'Ground truth', 'Prediction', 'Probability'])
 
 
-results_df_name = str(args.epoch) + 'e_' + str(args.max_len) + 'len_' + str(args.train_batch_size) + 'b_' + 'multilabel_results.csv'
+results_df_name = str(args.epoch) + 'len_' + str(args.train_batch_size) + 'b_' + 'multilabel_results.csv'
 testing_results.to_csv(results_directory + results_df_name)
 
 
