@@ -15,7 +15,7 @@ device = 'cuda' if cuda.is_available() else 'cpu'
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--test", default = False, action='store_true')
-parser.add_argument("--epoch", "-e", default=5, type=int)
+parser.add_argument("--epoch", "-e", default=200, type=int)
 parser.add_argument("--max_len", "-m", default=600, type=int)
 parser.add_argument("--learning_rate", "-l", default=1e-05, action = 'store_true')
 parser.add_argument("--train_batch_size", "-t", default=16, type=int)
@@ -143,30 +143,49 @@ class BERT_multilabel(torch.nn.Module):
         return output
 
 
-model = BERT_multilabel()
-model.to(device)
+
 
 
 def loss_fn(outputs, targets):
     return torch.nn.BCEWithLogitsLoss()(outputs, targets)
 
-optimizer = torch.optim.Adam(params =  model.parameters(), lr=LEARNING_RATE)
 
+model = BERT_multilabel()
+model.to(device)
+optimizer = torch.optim.Adam(params=model.parameters(), lr=LEARNING_RATE)
+lowest_loss = 0.9
 
 def train_multilabel(epoch):
+
     model.train()
     for _, data in enumerate(training_loader, 0):
         ids = data['ids'].to(device, dtype=torch.long)
         mask = data['mask'].to(device, dtype=torch.long)
         token_type_ids = data['token_type_ids'].to(device, dtype=torch.long)
         targets = data['targets'].to(device, dtype=torch.float)
-
         outputs = model(ids, mask, token_type_ids)
 
         optimizer.zero_grad()
         loss = loss_fn(outputs, targets)
-        if _ % 5000 == 0:
-            print(f'Epoch: {epoch}, Loss:  {loss.item()}')
+
+        if _ % 50 == 0:
+            global lowest_loss
+            if loss <= lowest_loss:
+                lowest_loss = loss
+            else:
+                global LEARNING_RATE
+                if LEARNING_RATE <= args.learning_rate/32:
+                    break
+                else:
+                    # global LEARNING_RATE
+                    LEARNING_RATE = LEARNING_RATE/2
+                    print(' half learning rate, current learning rate: ', LEARNING_RATE)
+                    print(epoch, 'EPOCH   current loss is: ',loss )
+                    for param_group in optimizer.param_groups:
+                        param_group['lr'] = LEARNING_RATE
+        # if _ % 5000 == 0:
+        #     print(f'Epoch: {epoch}, Loss:  {loss.item()}')
+
 
         optimizer.zero_grad()
         loss.backward()
@@ -174,7 +193,8 @@ def train_multilabel(epoch):
 
 for epoch in range(EPOCHS):
     train_multilabel(epoch)
-
+    if LEARNING_RATE <= args.learning_rate / 32:
+        break
 
 # define validating
 def validation_multilabel(model):
