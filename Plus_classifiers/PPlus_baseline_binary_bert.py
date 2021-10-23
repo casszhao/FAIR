@@ -215,7 +215,7 @@ for i, label in enumerate(list_of_label):
         binary_prob_array = np.concatenate([binary_prob_array, binary_prod])
         all_targets_array = np.concatenate([all_targets_array, targets])
 
-
+print(all_targets_array)
 binary_pred_list = np.transpose(binary_pred_array.reshape(len(list_of_label), len(test_dataset))).tolist()
 binary_prob_list = np.transpose(binary_prob_array.reshape(len(list_of_label), len(test_dataset))).tolist()
 all_targets_list = np.transpose(all_targets_array.reshape(len(list_of_label), len(test_dataset))).tolist()
