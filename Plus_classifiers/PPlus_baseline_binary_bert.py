@@ -1,4 +1,4 @@
-
+import argparse
 import numpy as np
 import pandas as pd
 from sklearn import metrics
@@ -10,29 +10,36 @@ from torch import cuda
 import torch.nn.functional as F
 device = 'cuda' if cuda.is_available() else 'cpu'
 
+parser = argparse.ArgumentParser()
+parser.add_argument("--test", default = False, action='store_true')
+parser.add_argument("--epoch", "-e", default=3, type=int)
+parser.add_argument("--max_len", "-m", default=500, type=int)
+parser.add_argument("--learning_rate", "-l", default=1e-05, action = 'store_true')
+parser.add_argument("--train_batch_size", "-t", default=16, type=int)
+# parser.add_argument("--", "-t", default=16, type=int, action = 'store_true')
+args = parser.parse_args()
 
-test = False
+EPOCHS = args.epoch
+MAX_LEN = args.max_len
+LEARNING_RATE = args.learning_rate
 
-if test == True:
-    MAX_LEN = 20
-    EPOCHS = 1
 
-    TRAIN_BATCH_SIZE = 8
-    VALID_BATCH_SIZE = 4
+
+if args.test == True:
+
     df = pd.read_csv('../sources/ProgressTrainingCombined.tsv', sep='\t',
                      usecols=['PaperTitle', 'Abstract', 'Place', 'Race', 'Occupation', 'Gender', 'Religion',
                               'Education', 'Socioeconomic', 'Social', 'Plus'])
     df['text'] = df.PaperTitle + ' ' + df.Abstract
     df['list'] = df[df.columns[2:11]].values.tolist()
     new_df = df[['text', 'list']].copy()
-    new_df = new_df.sample(20)
+    new_df = new_df.sample(200)
     results_directory = '../results/binary_pred_results.csv'
+    VALID_BATCH_SIZE = 4
+    TRAIN_BATCH_SIZE = 8
+    MAX_LEN = 20
 
 else:
-    MAX_LEN = 500
-    EPOCHS = 3
-    TRAIN_BATCH_SIZE = 16
-    VALID_BATCH_SIZE = 8
     df = pd.read_csv('./sources/ProgressTrainingCombined.tsv', sep='\t',
                      usecols=['PaperTitle', 'Abstract', 'Place', 'Race', 'Occupation', 'Gender', 'Religion',
                               'Education', 'Socioeconomic', 'Social', 'Plus'])
@@ -40,20 +47,14 @@ else:
     df['list'] = df[df.columns[2:11]].values.tolist()
     new_df = df[['text', 'list']].copy()
     results_directory = './results/binary_pred_results.csv'
+    VALID_BATCH_SIZE = 16
+    TRAIN_BATCH_SIZE = args.train_batch_size
 
 LABEL_NUM = 9
-LEARNING_RATE = 1e-05
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-
-# laod data
-# url = 'https://raw.githubusercontent.com/casszhao/FAIR/main/sources/PROGRESSSample.tsv'
-
-
-print(df.head())
 
 
 list_of_label = ['PlaceOfResidence','RaceEthnicity','Occupation','GenderSex','Religion', 'Education','SocioeconomicStatus', 'SocialCapital','Plus']
-
 print(new_df.head())
 
 
@@ -207,7 +208,13 @@ for i, label in enumerate(list_of_label):
   else:
     binary_pred = np.concatenate([binary_pred, pred])
     binary_prob = np.concatenate([binary_prob, outputs])
+    print('-------before concatenate---------')
+    print(all_targets)
+
+
     all_targets = np.concatenate([all_targets, targets])
+    print('-------after---------')
+    print(all_targets)
     # print('binary_pred ',binary_pred)
     # print('binary_prob ',binary_prob)
 
@@ -215,6 +222,7 @@ print(all_targets)
 binary_pred = binary_pred.reshape(len(test_dataset),len(list_of_label)).tolist()
 binary_prob = binary_prob.reshape(len(test_dataset),len(list_of_label)).tolist()
 all_targets = all_targets.reshape(len(test_dataset),len(list_of_label)).tolist()
+
 test_dataset['binary_pred'] = binary_pred
 test_dataset['binary_prob'] = binary_prob
 
@@ -222,6 +230,4 @@ binary_f1_score_micro = metrics.f1_score(all_targets, binary_pred, average='micr
 binary_f1_score_macro = metrics.f1_score(all_targets, binary_pred, average='macro')
 print(f"binary F1 Score (Micro) = {binary_f1_score_micro}")
 print(f"binary F1 Score (Macro) = {binary_f1_score_macro}")
-
 test_dataset.to_csv(results_directory)
-results_directory

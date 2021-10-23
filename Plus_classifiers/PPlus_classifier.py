@@ -8,7 +8,63 @@ from transformers import BertTokenizer, BertModel, BertConfig
 from torch import cuda
 device = 'cuda' if cuda.is_available() else 'cpu'
 
-test = False
+
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--test", default = False, action='store_true')
+parser.add_argument("--epoch", "-e", default=3, type=int)
+parser.add_argument("--max_len", "-m", default=500, type=int)
+parser.add_argument("--learning_rate", "-l", default=1e-05, action = 'store_true')
+parser.add_argument("--train_batch_size", "-t", default=16, type=int)
+# parser.add_argument("--", "-t", default=16, type=int, action = 'store_true')
+args = parser.parse_args()
+
+EPOCHS = args.epoch
+MAX_LEN = args.max_len
+LEARNING_RATE = args.learning_rate
+
+
+
+if args.test == True:
+
+    df = pd.read_csv('../sources/ProgressTrainingCombined.tsv', sep='\t',
+                     usecols=['PaperTitle', 'Abstract', 'Place', 'Race', 'Occupation', 'Gender', 'Religion',
+                              'Education', 'Socioeconomic', 'Social', 'Plus'])
+    df['text'] = df.PaperTitle + ' ' + df.Abstract
+    df['list'] = df[df.columns[2:11]].values.tolist()
+    new_df = df[['text', 'list']].copy()
+    new_df = new_df.sample(200)
+    results_directory = '../results/binary_pred_results.csv'
+    VALID_BATCH_SIZE = 4
+    TRAIN_BATCH_SIZE = 8
+    MAX_LEN = 20
+
+else:
+    df = pd.read_csv('./sources/ProgressTrainingCombined.tsv', sep='\t',
+                     usecols=['PaperTitle', 'Abstract', 'Place', 'Race', 'Occupation', 'Gender', 'Religion',
+                              'Education', 'Socioeconomic', 'Social', 'Plus'])
+    df['text'] = df.PaperTitle + ' ' + df.Abstract
+    df['list'] = df[df.columns[2:11]].values.tolist()
+    new_df = df[['text', 'list']].copy()
+    results_directory = './results/binary_pred_results.csv'
+    VALID_BATCH_SIZE = 16
+    TRAIN_BATCH_SIZE = args.train_batch_size
+
+LABEL_NUM = 9
+tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+
+
+
+
+
+
+
+
+
+
+
+
 
 # define hypeparameters
 
