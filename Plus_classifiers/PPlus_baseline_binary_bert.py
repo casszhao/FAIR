@@ -11,20 +11,47 @@ import torch.nn.functional as F
 device = 'cuda' if cuda.is_available() else 'cpu'
 
 
-test = False
+test = True
 
+if test == True:
+    MAX_LEN = 20
+    EPOCHS = 1
+
+    TRAIN_BATCH_SIZE = 8
+    VALID_BATCH_SIZE = 4
+    df = pd.read_csv('../sources/ProgressTrainingCombined.tsv', sep='\t',
+                     usecols=['PaperTitle', 'Abstract', 'Place', 'Race', 'Occupation', 'Gender', 'Religion',
+                              'Education', 'Socioeconomic', 'Social', 'Plus'])
+    df['text'] = df.PaperTitle + ' ' + df.Abstract
+    df['list'] = df[df.columns[2:11]].values.tolist()
+    new_df = df[['text', 'list']].copy()
+    new_df = new_df.sample(20)
+    results_directory = '../results/binary_pred_results.csv'
+
+else:
+    MAX_LEN = 500
+    EPOCHS = 3
+    TRAIN_BATCH_SIZE = 16
+    VALID_BATCH_SIZE = 8
+    df = pd.read_csv('./sources/ProgressTrainingCombined.tsv', sep='\t',
+                     usecols=['PaperTitle', 'Abstract', 'Place', 'Race', 'Occupation', 'Gender', 'Religion',
+                              'Education', 'Socioeconomic', 'Social', 'Plus'])
+    df['text'] = df.PaperTitle + ' ' + df.Abstract
+    df['list'] = df[df.columns[2:11]].values.tolist()
+    new_df = df[['text', 'list']].copy()
+    results_directory = './results/binary_pred_results.csv'
+
+LABEL_NUM = 9
+LEARNING_RATE = 1e-05
+tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 
 # laod data
 # url = 'https://raw.githubusercontent.com/casszhao/FAIR/main/sources/PROGRESSSample.tsv'
-df = pd.read_csv('./sources/ProgressTrainingCombined.tsv', sep='\t',
-                 usecols=['PaperTitle', 'Abstract', 'Place','Race','Occupation','Gender','Religion',
-                 'Education','Socioeconomic', 'Social','Plus'])
+
 
 print(df.head())
 
-df['text'] = df.PaperTitle + ' ' + df.Abstract
-df['list'] = df[df.columns[2:11]].values.tolist()
-new_df = df[['text', 'list']].copy()
+
 list_of_label = ['PlaceOfResidence','RaceEthnicity','Occupation','GenderSex','Religion', 'Education','SocioeconomicStatus', 'SocialCapital','Plus']
 
 print(new_df.head())
@@ -32,21 +59,7 @@ print(new_df.head())
 
 # define hypeparameters
 
-if test == True:
-    MAX_LEN = 20
-    EPOCHS = 1
-    new_df=new_df.sample(20)
-    TRAIN_BATCH_SIZE = 8
-    VALID_BATCH_SIZE = 4
-else:
-    MAX_LEN = 500
-    EPOCHS = 3
-    TRAIN_BATCH_SIZE = 16
-    VALID_BATCH_SIZE = 8
 
-LABEL_NUM = 9
-LEARNING_RATE = 1e-05
-tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 
 class CustomDataset(Dataset):
 
@@ -198,7 +211,7 @@ for i, label in enumerate(list_of_label):
     # print('binary_pred ',binary_pred)
     # print('binary_prob ',binary_prob)
 
-
+print(all_targets)
 binary_pred = binary_pred.reshape(len(test_dataset),len(list_of_label)).tolist()
 binary_prob = binary_prob.reshape(len(test_dataset),len(list_of_label)).tolist()
 all_targets = all_targets.reshape(len(test_dataset),len(list_of_label)).tolist()
@@ -210,4 +223,5 @@ binary_f1_score_macro = metrics.f1_score(all_targets, binary_pred, average='macr
 print(f"binary F1 Score (Micro) = {binary_f1_score_micro}")
 print(f"binary F1 Score (Macro) = {binary_f1_score_macro}")
 
-test_dataset.to_csv('./results/binary_pred_results.csv')
+test_dataset.to_csv(results_directory)
+results_directory
