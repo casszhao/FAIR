@@ -177,12 +177,9 @@ def validation_binary(epoch,model_name,label_index):
             token_type_ids = data['token_type_ids'].to(device, dtype = torch.long)
 
             targets_all = data['targets'].to(device, dtype=torch.float)
-            print(targets_all)
 
             targets_1d = torch.empty(targets_all.size()[0])
             targets_1d[:] = targets_all[:, label_index]  # i
-            print('      targets_1d -')
-            print(targets_1d)
             fin_targets.extend(targets_1d)
             # targets = torch.stack([1 - targets_1d, targets_1d], dim=1).to(device)
             outputs = model(ids, mask, token_type_ids)
