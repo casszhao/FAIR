@@ -248,8 +248,10 @@ results_df.to_csv(results_directory + results_df_name)
 binary_f1_score_micro = metrics.f1_score(all_targets_array, binary_pred_array, average='micro')
 binary_f1_score_macro = metrics.f1_score(all_targets_array, binary_pred_array, average='macro')
 
-binary_pred_array = np.array(binary_pred)
-targets_array = np.array(targets)
+binary_pred_array = np.array(binary_pred_list)
+print(binary_pred_array)
+targets_array = np.array(all_targets_list)
+print(targets_array)
 
 def one_label_f1(label_index):
     label_name = list_of_label[label_index]
