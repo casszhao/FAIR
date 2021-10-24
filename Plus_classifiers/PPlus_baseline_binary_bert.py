@@ -9,6 +9,8 @@ from torch.utils.data import Dataset, DataLoader, RandomSampler, SequentialSampl
 from transformers import BertModel, BertConfig, BertTokenizer, BertForSequenceClassification
 from torch import cuda
 import torch.nn.functional as F
+
+
 device = 'cuda' if cuda.is_available() else 'cpu'
 
 parser = argparse.ArgumentParser()
@@ -24,6 +26,7 @@ EPOCHS = args.epoch
 MAX_LEN = args.max_len
 LEARNING_RATE = args.learning_rate
 
+test = True
 
 
 if args.test == True:
@@ -108,8 +111,8 @@ train_dataset = train_dataset.reset_index(drop=True)
 
 
 print("FULL Dataset: {}".format(new_df.shape))
-print("TRAIN Dataset: {}, testing batch size: {}, testing batch size: {}".format(train_dataset.shape, TRAIN_BATCH_SIZE, VALID_BATCH_SIZE))
-print("TEST Dataset: {}, testing batch size: {}, testing batch size: {}".format(test_dataset.shape, TRAIN_BATCH_SIZE, VALID_BATCH_SIZE))
+print("TRAIN Dataset: {}, training batch size: {}".format(train_dataset.shape, TRAIN_BATCH_SIZE))
+print("TEST Dataset: {}, testing batch size: {}".format(test_dataset.shape, VALID_BATCH_SIZE))
 
 training_set = CustomDataset(train_dataset, tokenizer, MAX_LEN)
 testing_set = CustomDataset(test_dataset, tokenizer, MAX_LEN)
@@ -174,18 +177,20 @@ def validation_binary(epoch,model_name,label_index):
             token_type_ids = data['token_type_ids'].to(device, dtype = torch.long)
 
             targets_all = data['targets'].to(device, dtype=torch.float)
+            print(targets_all)
 
             targets_1d = torch.empty(targets_all.size()[0])
             targets_1d[:] = targets_all[:, label_index]  # i
-            targets = torch.stack([1 - targets_1d, targets_1d], dim=1).to(device)
-
+            print('      targets_1d -')
+            print(targets_1d)
+            fin_targets.extend(targets_1d)
+            # targets = torch.stack([1 - targets_1d, targets_1d], dim=1).to(device)
             outputs = model(ids, mask, token_type_ids)
-
-            fin_targets.extend(targets.cpu().detach().numpy().tolist())
-
+            # fin_targets.extend(targets.cpu().detach().numpy().tolist())
             logits = F.softmax(outputs.logits, dim=-1)[:,1]
             fin_outputs.extend(logits.cpu().detach().numpy().tolist())
-    return fin_outputs, targets_1d.cpu().detach().numpy().tolist(), text_list
+
+    return fin_outputs, fin_targets, text_list
 
 
 f1_list = []
@@ -198,26 +203,36 @@ for i, label in enumerate(list_of_label):
     for epoch in range(EPOCHS):
         train_binary(epoch, label_index, model, optimizer)
 
-    binary_prod, targets, text_list = validation_binary(epoch, model, label_index)
-    binary_pred = np.array(binary_prod) >= 0.5
+    binary_prob, targets, text_list = validation_binary(epoch, model, label_index)
+    # print('-----------')
+    # print(binary_prob)
+    # print(len(binary_prob))
+    # print(targets)
+    # print(len(targets))
+    # print(text_list)
+    # print(len(text_list))
+    binary_pred = np.array(binary_prob) >= 0.5
     binary_pred = binary_pred.astype(int)
-    # print('new binary_prod')
-    # print(binary_prod)
+    # print('new binary_prob')
+    # print(binary_prob)
 
     if i ==0:
         binary_pred_array = binary_pred
-        binary_prob_array = binary_prod
+        binary_prob_array = binary_prob
         all_targets_array = targets
-        print(len(all_targets_array))
+        # print(len(all_targets_array))
+        # print(len(binary_prob_array))
+
             # print('binary_pred ',binary_pred)
             # print('binary_prob ',binary_prob)
     else:
         binary_pred_array = np.concatenate([binary_pred_array, binary_pred])
-        binary_prob_array = np.concatenate([binary_prob_array, binary_prod])
+        binary_prob_array = np.concatenate([binary_prob_array, binary_prob])
         all_targets_array = np.concatenate([all_targets_array, targets])
-        print(len(all_targets_array))
+        # print(len(all_targets_array))
+        # print(len(binary_prob_array))
 
-print(all_targets_array)
+# print(all_targets_array)
 binary_pred_list = np.transpose(binary_pred_array.reshape(len(list_of_label), len(test_dataset))).tolist()
 binary_prob_list = np.transpose(binary_prob_array.reshape(len(list_of_label), len(test_dataset))).tolist()
 all_targets_list = np.transpose(all_targets_array.reshape(len(list_of_label), len(test_dataset))).tolist()
@@ -233,7 +248,7 @@ results_df.to_csv(results_directory + results_df_name)
 binary_f1_score_micro = metrics.f1_score(all_targets_array, binary_pred_array, average='micro')
 binary_f1_score_macro = metrics.f1_score(all_targets_array, binary_pred_array, average='macro')
 
-multilabel_pred_array = np.array(multilabel_pred)
+binary_pred_array = np.array(binary_pred)
 targets_array = np.array(targets)
 
 def one_label_f1(label_index):
