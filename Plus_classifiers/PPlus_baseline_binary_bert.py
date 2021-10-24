@@ -249,9 +249,8 @@ binary_f1_score_micro = metrics.f1_score(all_targets_array, binary_pred_array, a
 binary_f1_score_macro = metrics.f1_score(all_targets_array, binary_pred_array, average='macro')
 
 binary_pred_array = np.array(binary_pred_list)
-print(binary_pred_array)
-targets_array = np.array(all_targets_list)
-print(targets_array)
+all_targets_array = np.array(all_targets_list)
+
 
 def one_label_f1(label_index):
     label_name = list_of_label[label_index]
