@@ -58,7 +58,7 @@ LABEL_NUM = 9
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 
 
-list_of_label = ['PlaceOfResidence','RaceEthnicity','Occupation','GenderSex','Religion', 'Education','SocioeconomicStatus', 'SocialCapital','Plus']
+list_of_label = ['Place', 'Race', 'Occupation', 'Gender', 'Religion', 'Education', 'Socioeconomic', 'Social', 'Plus']
 print(new_df.head())
 
 
