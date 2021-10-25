@@ -262,9 +262,10 @@ def one_label_f1(label_index):
     f1 = f1_score(true_label, pred_label)
     return label_name, f1
 
+print('---------------------')
 for i, label in enumerate(list_of_label):
     label_name, f1 = one_label_f1(i)
-    print(label_name, f1)
+    print(label_name, '  ', f1)
 
 
 # usecols list_of_label = ['Place', 'Race', 'Occupation', 'Gender', 'Religion',
