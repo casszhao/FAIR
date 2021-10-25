@@ -162,6 +162,8 @@ def train_binary(epoch, label_index, model_name, optimizer_name):
         loss.backward()
         optimizer.step()
 
+    print('Epoch: ', epoch, 'Loss: ', loss)
+
 def validation_binary(epoch,model_name,label_index):
     model = model_name
     model.eval()
