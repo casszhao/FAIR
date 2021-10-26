@@ -10,13 +10,16 @@ df = pd.read_csv(fileName, converters={'Ground truth': pd.eval, 'Prediction': pd
 
 pred_label = df['Prediction']
 target = df['Ground truth']
+probability = df['Probability']
 
-
-binary_pred_array = np.array([np.array(xi) for xi in pred_label])
-all_targets_array = np.array([np.array(xi) for xi in target])
+pred_array = np.array([np.array(xi) for xi in pred_label])
+targets_array = np.array([np.array(xi) for xi in target])
+prob_array = np.array([np.array(xi) for xi in probability])
 
 
 list_of_label = ['Place', 'Race', 'Occupation', 'Gender', 'Religion', 'Education', 'Socioeconomic', 'Social', 'Plus']
+
+
 
 def one_label_f1(label_index):
     label_name = list_of_label[label_index]
