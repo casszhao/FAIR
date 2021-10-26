@@ -6,7 +6,7 @@ from sklearn.metrics import f1_score
 import transformers
 import torch
 from torch.utils.data import Dataset, DataLoader, RandomSampler, SequentialSampler
-from transformers import BertModel, BertConfig, BertTokenizer, BertForSequenceClassification
+from transformers import AutoTokenizer, BertModel, BertConfig, BertTokenizer, BertForSequenceClassification
 from torch import cuda
 import torch.nn.functional as F
 
@@ -19,6 +19,7 @@ parser.add_argument("--epoch", "-e", default=3, type=int)
 parser.add_argument("--max_len", "-m", default=500, type=int)
 parser.add_argument("--learning_rate", "-l", default=1e-05, action = 'store_true')
 parser.add_argument("--train_batch_size", "-t", default=16, type=int)
+parser.add_argument("--bert_model", "-b", default='bert-base-uncased')
 # parser.add_argument("--", "-t", default=16, type=int, action = 'store_true')
 args = parser.parse_args()
 
@@ -55,7 +56,12 @@ else:
     TRAIN_BATCH_SIZE = args.train_batch_size
 
 LABEL_NUM = 9
-tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+if args.bert_model == 'allenai/scibert_scivocab_uncased':
+    tokenizer = AutoTokenizer.from_pretrained(args.bert_model)
+else:
+    tokenizer = BertTokenizer.from_pretrained(args.bert_model)
+
+
 
 
 list_of_label = ['Place', 'Race', 'Occupation', 'Gender', 'Religion', 'Education', 'Socioeconomic', 'Social', 'Plus']
@@ -132,7 +138,7 @@ training_loader = DataLoader(training_set, **train_params)
 testing_loader = DataLoader(testing_set, **test_params)
 
 
-model = BertForSequenceClassification.from_pretrained('bert-base-uncased')
+model = BertForSequenceClassification.from_pretrained(args.bert_model)
 model.to(device)
 
 
@@ -194,7 +200,7 @@ def validation_binary(epoch,model_name,label_index):
 
 f1_list = []
 for i, label in enumerate(list_of_label):
-    model = BertForSequenceClassification.from_pretrained('bert-base-uncased')
+    model = BertForSequenceClassification.from_pretrained(args.bert_model)
     model.to(device)
     optimizer = torch.optim.Adam(params =  model.parameters(), lr=LEARNING_RATE)
     label_index = i
