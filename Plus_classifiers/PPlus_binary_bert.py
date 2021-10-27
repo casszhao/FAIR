@@ -20,6 +20,7 @@ parser.add_argument("--max_len", "-m", default=500, type=int)
 parser.add_argument("--learning_rate", "-l", default=1e-05, action = 'store_true')
 parser.add_argument("--train_batch_size", "-t", default=16, type=int)
 parser.add_argument("--bert_model", "-b", default='bert-base-uncased')
+# other option allenai/scibert_scivocab_uncased
 # parser.add_argument("--", "-t", default=16, type=int, action = 'store_true')
 args = parser.parse_args()
 
