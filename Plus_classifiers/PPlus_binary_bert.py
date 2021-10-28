@@ -286,5 +286,5 @@ for i, label in enumerate(list_of_label):
 # usecols list_of_label = ['Place', 'Race', 'Occupation', 'Gender', 'Religion',
 #            'Education', 'Socioeconomic', 'Social', 'Plus']
 
-print(f"binary F1 Score (Micro) = {binary_f1_score_micro}")
-print(f"binary F1 Score (Macro) = {binary_f1_score_macro}")
+print("binary F1 Score (Micro) ", binary_f1_score_micro)
+print("binary F1 Score (Macro) ", binary_f1_score_macro)
