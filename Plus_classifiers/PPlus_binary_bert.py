@@ -246,8 +246,17 @@ all_targets_list = np.transpose(all_targets_array.reshape(len(list_of_label), le
 results_df = pd.DataFrame(list(zip(text_list,all_targets_list,binary_pred_list,binary_prob_list)),
                                columns =['Text', 'Ground truth', 'Prediction', 'Probability'])
 
+parser.add_argument("--bert_model", "-b", default='bert-base-uncased')
+# other option allenai/scibert_scivocab_uncased
 
-results_df_name = str(args.max_len) + 'len_' + str(args.train_batch_size) + 'b_' + str(args.epoch) + 'e_'+ 'binary_results.csv'
+if args.bert_model == 'allenai/scibert_scivocab_uncased':
+    results_df_name = 'scibert_' + str(args.max_len) + 'len_' + str(args.train_batch_size) + 'b_' + str(args.epoch) + 'e_'+ 'binary_results.csv'
+elif args.bert_model == 'bert_base_uncased':
+    results_df_name = 'bert_' + str(args.max_len) + 'len_' + str(args.train_batch_size) + 'b_' + str(
+        args.epoch) + 'e_' + 'binary_results.csv'
+else:
+    results_df_name = str(args.max_len) + 'len_' + str(args.train_batch_size) + 'b_' + str(
+        args.epoch) + 'e_' + 'binary_results.csv'
 results_df.to_csv(results_directory + results_df_name)
 
 
