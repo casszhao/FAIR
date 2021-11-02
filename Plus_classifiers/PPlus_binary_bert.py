@@ -20,6 +20,7 @@ parser.add_argument("--max_len", "-m", default=500, type=int)
 parser.add_argument("--learning_rate", "-l", default=1e-05, action = 'store_true')
 parser.add_argument("--train_batch_size", "-t", default=16, type=int)
 parser.add_argument("--bert_model", "-b", default='bert-base-uncased')
+parser.add_argument('--journal_name', '-j', action = 'store_true')
 # other option allenai/scibert_scivocab_uncased
 # parser.add_argument("--", "-t", default=16, type=int, action = 'store_true')
 args = parser.parse_args()
@@ -47,10 +48,15 @@ if args.test == True:
 
 else:
     df = pd.read_csv('./sources/ProgressTrainingCombined.tsv', sep='\t',
-                     usecols=['PaperTitle', 'Abstract', 'Place', 'Race', 'Occupation', 'Gender', 'Religion',
+                     usecols=['PaperTitle', 'Abstract', 'JN', 'Place', 'Race', 'Occupation', 'Gender', 'Religion',
                               'Education', 'Socioeconomic', 'Social', 'Plus'])
-    df['text'] = df.PaperTitle + ' ' + df.Abstract
-    df['list'] = df[df.columns[2:11]].values.tolist()
+    if args.journal_name == True:
+        df['text'] = df.PaperTitle + ' ' + df.JN + ' ' + df.Abstract
+        df['list'] = df[df.columns[3:12]].values.tolist()
+
+    else:
+        df['text'] = df.PaperTitle + ' ' + df.Abstract
+        df['list'] = df[df.columns[2:11]].values.tolist()
     new_df = df[['text', 'list']].copy()
     results_directory = './results/'
     VALID_BATCH_SIZE = 16
