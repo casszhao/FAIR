@@ -5,7 +5,7 @@ from sklearn import metrics
 from sklearn.metrics import f1_score
 import transformers
 import torch
-from torch.utils.data import Dataset, DataLoader, RandomSampler, SequentialSampler
+from torch.utils.data import Dataset, DataLoader, RandomSampler, SequentialSampler, AutoTokenizer
 from transformers import BertTokenizer, BertModel, BertConfig
 from torch import cuda
 device = 'cuda' if cuda.is_available() else 'cpu'
@@ -19,6 +19,8 @@ parser.add_argument("--epoch", "-e", default=200, type=int)
 parser.add_argument("--max_len", "-m", default=600, type=int)
 parser.add_argument("--learning_rate", "-l", default=1e-05, action = 'store_true')
 parser.add_argument("--train_batch_size", "-t", default=16, type=int)
+parser.add_argument('--journal_name', '-j', action = 'store_true')
+parser.add_argument("--bert_model", "-b", default='bert-base-uncased')
 # parser.add_argument("--", "-t", default=16, type=int, action = 'store_true')
 args = parser.parse_args()
 
@@ -47,8 +49,14 @@ else:
     df = pd.read_csv('./sources/ProgressTrainingCombined.tsv', sep='\t',
                      usecols=['PaperTitle', 'Abstract', 'Place', 'Race', 'Occupation', 'Gender', 'Religion',
                               'Education', 'Socioeconomic', 'Social', 'Plus'])
-    df['text'] = df.PaperTitle + ' ' + df.Abstract
-    df['list'] = df[df.columns[2:11]].values.tolist()
+    if args.journal_name == True:
+        df['text'] = df.PaperTitle + ' ' + df.JN + ' ' + df.Abstract
+        df['list'] = df[df.columns[3:12]].values.tolist()
+
+    else:
+        df['text'] = df.PaperTitle + ' ' + df.Abstract
+        df['list'] = df[df.columns[2:11]].values.tolist()
+
     new_df = df[['text', 'list']].copy()
     results_directory = './results/'
     VALID_BATCH_SIZE = 16
@@ -58,7 +66,10 @@ else:
 
 print(df.mean())
 LABEL_NUM = 9
-tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+if args.bert_model == 'allenai/scibert_scivocab_uncased':
+    tokenizer = AutoTokenizer.from_pretrained(args.bert_model)
+else:
+    tokenizer = BertTokenizer.from_pretrained(args.bert_model)
 list_of_label = ['Place', 'Race', 'Occupation', 'Gender', 'Religion', 'Education', 'Socioeconomic', 'Social', 'Plus']
 
 class CustomDataset(Dataset):
@@ -130,7 +141,7 @@ testing_loader = DataLoader(testing_set, **test_params)
 class BERT_multilabel(torch.nn.Module):
     def __init__(self):
         super(BERT_multilabel, self).__init__()
-        self.l1 = transformers.BertModel.from_pretrained('bert-base-uncased')
+        self.l1 = transformers.BertModel.from_pretrained(args.bert_model)
         self.l2 = torch.nn.Dropout(0.3)
         self.l3 = torch.nn.Linear(768, LABEL_NUM)
 
@@ -246,7 +257,10 @@ testing_results = pd.DataFrame(list(zip(text_list, targets, multilabel_pred, mul
                                columns =['Text', 'Ground truth', 'Prediction', 'Probability'])
 
 
-results_df_name = str(args.max_len) + 'len_' + str(args.train_batch_size) + 'b_' + str(args.epoch) + 'e_'+ 'multilabel_results.csv'
+if args.bert_model == 'allenai/scibert_scivocab_uncased':
+    results_df_name = 'scibert_' + str(args.max_len) + 'len_' + str(args.train_batch_size) + 'b_' + str(args.epoch) + 'e_'+ 'multilabel_results.csv'
+elif args.bert_model == 'bert_base_uncased':
+    results_df_name = str(args.max_len) + 'len_' + str(args.train_batch_size) + 'b_' + str(args.epoch) + 'e_'+ 'multilabel_results.csv'
 testing_results.to_csv(results_directory + results_df_name)
 
 
