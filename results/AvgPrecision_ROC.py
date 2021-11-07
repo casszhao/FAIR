@@ -5,7 +5,7 @@ from sklearn.metrics import roc_auc_score
 from matplotlib import pyplot
 
 
-fileName = '400len_8b_20e_binary_results.csv'
+fileName = 'scibert_500len_8b_20e_binary_results.csv'
 
 df = pd.read_csv(fileName, converters={'Ground truth': pd.eval, 'Prediction': pd.eval, 'Probability': pd.eval})
 

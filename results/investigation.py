@@ -5,7 +5,7 @@ from ast import literal_eval
 import csv
 
 
-fileName = '500len_16b_20e_binary_results.csv'
+fileName = 'scibert_500len_8b_20e_binary_results.csv'
 df = pd.read_csv(fileName, converters={'Ground truth': pd.eval, 'Prediction': pd.eval, 'Probability': pd.eval})
 
 pred_label = df['Prediction']
@@ -23,8 +23,8 @@ list_of_label = ['Place', 'Race', 'Occupation', 'Gender', 'Religion', 'Education
 
 def one_label_f1(label_index):
     label_name = list_of_label[label_index]
-    pred_label = binary_pred_array[:, label_index]
-    true_label = all_targets_array[:, label_index]
+    pred_label = pred_array[:, label_index]
+    true_label = targets_array[:, label_index]
     # print(len(true_label))
     # print(true_label)
     # print(len(pred_label))
@@ -38,3 +38,7 @@ print('---------------------')
 for i, label in enumerate(list_of_label):
     label_name, f1, recall, precision = one_label_f1(i)
     print(label_name, '  ', 'F1', f1, 'recall', recall, 'precision', precision)
+
+binary_f1_score_micro = f1_score(targets_array, pred_array, average='micro')
+binary_f1_score_macro = f1_score(targets_array, pred_array, average='macro')
+print(binary_f1_score_micro, binary_f1_score_macro)

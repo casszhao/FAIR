@@ -272,6 +272,9 @@ results_df.to_csv(results_directory + results_df_name)
 binary_f1_score_micro = metrics.f1_score(all_targets_array, binary_pred_array, average='micro')
 binary_f1_score_macro = metrics.f1_score(all_targets_array, binary_pred_array, average='macro')
 
+print("binary F1 Score (Micro) ", binary_f1_score_micro)
+print("binary F1 Score (Macro) ", binary_f1_score_macro)
+
 binary_pred_array = np.array(binary_pred_list)
 all_targets_array = np.array(all_targets_list)
 
