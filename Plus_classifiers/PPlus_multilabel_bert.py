@@ -271,22 +271,24 @@ multilabel_f1_score_macro = metrics.f1_score(targets, multilabel_pred, average='
 
 multilabel_pred_array = np.array(multilabel_pred)
 targets_array = np.array(targets)
+
 def one_label_f1(label_index):
     label_name = list_of_label[label_index]
     pred_label = multilabel_pred_array[:, label_index]
+    prob = multilabel_prod[:, label_index]
     true_label = targets_array[:, label_index]
-    # print(len(true_label))
-    # print(true_label)
-    # print(len(pred_label))
-    # print(pred_label)
+    brier = brier_score_loss(true_label, prob)
+    recall = recall_score(true_label, pred_label)
+    precision = precision_score(true_label, pred_label)
     f1 = f1_score(true_label, pred_label)
-    return label_name, f1
+    return label_name, f1, recall, precision, brier
 
 print('---------------------')
 
 for i, label in enumerate(list_of_label):
-    label_name, f1 = one_label_f1(i)
-    print(label_name, '  ', f1)
+    label_name, f1, recall, precision, brier = one_label_f1(i)
+    print(label_name)
+    print('f1, recall, precision, brier', label_name, f1, recall, precision, brier)
 
 
 # usecols list_of_label = ['Place', 'Race', 'Occupation', 'Gender', 'Religion',
