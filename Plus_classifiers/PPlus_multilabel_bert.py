@@ -47,7 +47,7 @@ if args.test == True:
 
 else:
     df = pd.read_csv('./sources/ProgressTrainingCombined.tsv', sep='\t',
-                     usecols=['PaperTitle', 'Abstract', 'Place', 'Race', 'Occupation', 'Gender', 'Religion',
+                     usecols=['PaperTitle', 'Abstract', 'JN','Place', 'Race', 'Occupation', 'Gender', 'Religion',
                               'Education', 'Socioeconomic', 'Social', 'Plus'])
     if args.journal_name == True:
         df['text'] = df.PaperTitle + ' ' + df.JN + ' ' + df.Abstract
