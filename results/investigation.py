@@ -52,8 +52,8 @@ for i, label in enumerate(list_of_label):
     print('biere: ', brier)
 
 avg_brier = sum(all_brier)/len(all_brier)
-print('avg brier :')
-print(avg_brier)
+print('avg brier :', avg_brier)
+
 binary_f1_score_micro = f1_score(targets_array, pred_array, average='micro')
 binary_f1_score_macro = f1_score(targets_array, pred_array, average='macro')
 print(binary_f1_score_micro, binary_f1_score_macro)

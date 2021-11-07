@@ -2,7 +2,7 @@ import argparse
 import numpy as np
 import pandas as pd
 from sklearn import metrics
-from sklearn.metrics import f1_score
+from sklearn.metrics import f1_score, brier_score_loss, recall_score, precision_score, roc_auc_score
 import transformers
 import torch
 from torch.utils.data import Dataset, DataLoader, RandomSampler, SequentialSampler
@@ -166,46 +166,6 @@ model.to(device)
 optimizer = torch.optim.Adam(params=model.parameters(), lr=LEARNING_RATE)
 
 
-# def train_multilabel(epoch):
-#
-#     model.train()
-#     for _, data in enumerate(training_loader, 0):
-#         ids = data['ids'].to(device, dtype=torch.long)
-#         mask = data['mask'].to(device, dtype=torch.long)
-#         token_type_ids = data['token_type_ids'].to(device, dtype=torch.long)
-#         targets = data['targets'].to(device, dtype=torch.float)
-#         outputs = model(ids, mask, token_type_ids)
-#
-#         optimizer.zero_grad()
-#         loss = loss_fn(outputs, targets)
-#
-#         if _ % 44 == 0:
-#             global lowest_loss
-#             if loss <= lowest_loss: # loss go down, update best loss and keep training
-#                 lowest_loss = loss
-#             else:                   # loss is high or go up
-#                 if loss >= 0.4:     # if it is in initial rounds, where loss above 0.4, dont change lr
-#                     pass
-#                 else: # loss below 0.5 but higher than best loss ==> loss go down, need to half lr
-#                     global LEARNING_RATE
-#                     if LEARNING_RATE <= args.learning_rate/32: # already half 5 times
-#                         break
-#                         print('stop training for 5 times half')
-#                     else:
-#                         # global LEARNING_RATE
-#                         LEARNING_RATE = LEARNING_RATE/2
-#                         print(epoch, 'EPOCH   current loss is: ',loss )
-#                         print(' half learning rate, new learning rate: ', LEARNING_RATE)
-#                         for param_group in optimizer.param_groups:
-#                             param_group['lr'] = LEARNING_RATE
-#         # if _ % 5000 == 0:
-#         #     print(f'Epoch: {epoch}, Loss:  {loss.item()}')
-#
-#
-#         optimizer.zero_grad()
-#         loss.backward()
-#         optimizer.step()
-
 def train_multilabel(epoch):
     print(epoch)
 
@@ -251,7 +211,10 @@ def validation_multilabel(model):
 
 
 multilabel_prod, targets, text_list = validation_multilabel(model)
+multilabel_prod_array = np.array(multilabel_prod)
+# multilabel_prod_array = np.array([np.array(xi) for xi in multilabel_prod])
 multilabel_pred = [[np.round(float(i)) for i in nested] for nested in multilabel_prod]
+multilabel_pred_array = np.array(multilabel_pred)
 
 testing_results = pd.DataFrame(list(zip(text_list, targets, multilabel_pred, multilabel_prod)),
                                columns =['Text', 'Ground truth', 'Prediction', 'Probability'])
@@ -275,7 +238,7 @@ targets_array = np.array(targets)
 def one_label_f1(label_index):
     label_name = list_of_label[label_index]
     pred_label = multilabel_pred_array[:, label_index]
-    prob = multilabel_prod[:, label_index]
+    prob = multilabel_prod_array[:, label_index]
     true_label = targets_array[:, label_index]
     brier = brier_score_loss(true_label, prob)
     recall = recall_score(true_label, pred_label)
@@ -285,12 +248,21 @@ def one_label_f1(label_index):
 
 print('---------------------')
 
+all_brier = []
 for i, label in enumerate(list_of_label):
     label_name, f1, recall, precision, brier = one_label_f1(i)
     print(label_name)
     print('f1, recall, precision, brier', label_name, f1, recall, precision, brier)
+    all_brier.append(brier)
 
+print(all_brier)
+avg_brier = sum(all_brier)/len(all_brier)
+print('avg brier :')
+roc = roc_auc_score(targets_array, multilabel_prod_array)
+print('roc: ', roc)
 
+avg_brier = sum(all_brier)/len(all_brier)
+print('avg brier :', avg_brier)
 # usecols list_of_label = ['Place', 'Race', 'Occupation', 'Gender', 'Religion',
 #            'Education', 'Socioeconomic', 'Social', 'Plus']
 
