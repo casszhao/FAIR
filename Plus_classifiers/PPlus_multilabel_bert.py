@@ -5,8 +5,8 @@ from sklearn import metrics
 from sklearn.metrics import f1_score
 import transformers
 import torch
-from torch.utils.data import Dataset, DataLoader, RandomSampler, SequentialSampler, AutoTokenizer
-from transformers import BertTokenizer, BertModel, BertConfig
+from torch.utils.data import Dataset, DataLoader, RandomSampler, SequentialSampler
+from transformers import BertTokenizer, BertModel, BertConfig, AutoTokenizer
 from torch import cuda
 device = 'cuda' if cuda.is_available() else 'cpu'
 
@@ -260,6 +260,8 @@ testing_results = pd.DataFrame(list(zip(text_list, targets, multilabel_pred, mul
 if args.bert_model == 'allenai/scibert_scivocab_uncased':
     results_df_name = 'scibert_' + str(args.max_len) + 'len_' + str(args.train_batch_size) + 'b_' + str(args.epoch) + 'e_'+ 'multilabel_results.csv'
 elif args.bert_model == 'bert_base_uncased':
+    results_df_name = str(args.max_len) + 'len_' + str(args.train_batch_size) + 'b_' + str(args.epoch) + 'e_'+ 'multilabel_results.csv'
+else:
     results_df_name = str(args.max_len) + 'len_' + str(args.train_batch_size) + 'b_' + str(args.epoch) + 'e_'+ 'multilabel_results.csv'
 testing_results.to_csv(results_directory + results_df_name)
 
