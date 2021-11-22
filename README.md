@@ -1,4 +1,6 @@
 # FAIR:Finding Accessible Inequalities Research in Public Health (the FAIR Database)
+System Overview
+ ![System overview](https://github.com/casszhao/FAIR/blob/main/images/SystemOverview.jpg)
 
 ## Requirements
 ```shell script
@@ -28,3 +30,5 @@ pip install transformers pymediawiki
       ```
       ![Workflow of labelling a given abstract](https://github.com/casszhao/FAIR/blob/main/images/how%20we%20label%20a%20abstract.jpg)
       
+
+4. PPlus_classifier contains two models for PROGRESS-Plus classifiers.
