@@ -226,6 +226,10 @@ elif args.bert_model == 'bert_base_uncased':
     results_df_name = str(args.max_len) + 'len_' + str(args.train_batch_size) + 'b_' + str(args.epoch) + 'e_'+ 'multilabel_results.csv'
 else:
     results_df_name = str(args.max_len) + 'len_' + str(args.train_batch_size) + 'b_' + str(args.epoch) + 'e_'+ 'multilabel_results.csv'
+
+if args.journal_name == True:
+    results_df_name = str('JN_') + results_df_name
+
 testing_results.to_csv(results_directory + results_df_name)
 
 
