@@ -51,12 +51,12 @@ else:
                               'Education', 'Socioeconomic', 'Social', 'Plus'])
     if args.journal_name == True:
         df['text'] = df.PaperTitle + ' ' + df.JN + ' ' + df.Abstract
-        df['list'] = df[df.columns[3:12]].values.tolist()
+
 
     else:
         df['text'] = df.PaperTitle + ' ' + df.Abstract
-        df['list'] = df[df.columns[2:11]].values.tolist()
 
+    df['list'] = df[df.columns[3:12]].values.tolist()
     new_df = df[['text', 'list']].copy()
     results_directory = './results/'
     VALID_BATCH_SIZE = 16

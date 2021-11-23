@@ -2,7 +2,7 @@ import argparse
 import numpy as np
 import pandas as pd
 from sklearn import metrics
-from sklearn.metrics import f1_score
+from sklearn.metrics import f1_score, brier_score_loss, recall_score, precision_score, roc_auc_score
 import transformers
 import torch
 from torch.utils.data import Dataset, DataLoader, RandomSampler, SequentialSampler
@@ -35,7 +35,7 @@ test = True
 if args.test == True:
 
     df = pd.read_csv('../sources/ProgressTrainingCombined.tsv', sep='\t',
-                     usecols=['PaperTitle', 'Abstract', 'Place', 'Race', 'Occupation', 'Gender', 'Religion',
+                     usecols=['PaperTitle', 'Abstract', 'JN', 'Place', 'Race', 'Occupation', 'Gender', 'Religion',
                               'Education', 'Socioeconomic', 'Social', 'Plus'])
     if args.journal_name == True:
         df['text'] = df.PaperTitle + ' ' + df.JN + ' ' + df.Abstract
@@ -58,11 +58,10 @@ else:
                               'Education', 'Socioeconomic', 'Social', 'Plus'])
     if args.journal_name == True:
         df['text'] = df.PaperTitle + ' ' + df.JN + ' ' + df.Abstract
-        df['list'] = df[df.columns[3:12]].values.tolist()
-
     else:
         df['text'] = df.PaperTitle + ' ' + df.Abstract
-        df['list'] = df[df.columns[2:11]].values.tolist()
+
+    df['list'] = df[df.columns[3:12]].values.tolist()
     new_df = df[['text', 'list']].copy()
     results_directory = './results/'
     VALID_BATCH_SIZE = 16
@@ -217,18 +216,10 @@ for i, label in enumerate(list_of_label):
     model.to(device)
     optimizer = torch.optim.Adam(params =  model.parameters(), lr=LEARNING_RATE)
     label_index = i
-
     for epoch in range(EPOCHS):
         train_binary(epoch, label_index, model, optimizer)
 
     binary_prob, targets, text_list = validation_binary(epoch, model, label_index)
-    # print('-----------')
-    # print(binary_prob)
-    # print(len(binary_prob))
-    # print(targets)
-    # print(len(targets))
-    # print(text_list)
-    # print(len(text_list))
     binary_pred = np.array(binary_prob) >= 0.5
     binary_pred = binary_pred.astype(int)
     # print('new binary_prob')
@@ -251,9 +242,12 @@ for i, label in enumerate(list_of_label):
         # print(len(binary_prob_array))
 
 # print(all_targets_array)
-binary_pred_list = np.transpose(binary_pred_array.reshape(len(list_of_label), len(test_dataset))).tolist()
-binary_prob_list = np.transpose(binary_prob_array.reshape(len(list_of_label), len(test_dataset))).tolist()
-all_targets_list = np.transpose(all_targets_array.reshape(len(list_of_label), len(test_dataset))).tolist()
+binary_pred = np.transpose(binary_pred_array.reshape(len(list_of_label), len(test_dataset)))
+binary_pred_list = binary_pred.tolist()
+binary_prob = np.transpose(binary_prob_array.reshape(len(list_of_label), len(test_dataset)))
+binary_prob_list = binary_prob.tolist()
+all_targets = np.transpose(all_targets_array.reshape(len(list_of_label), len(test_dataset)))
+all_targets_list = all_targets.tolist()
 
 results_df = pd.DataFrame(list(zip(text_list,all_targets_list,binary_pred_list,binary_prob_list)),
                                columns =['Text', 'Ground truth', 'Prediction', 'Probability'])
@@ -275,35 +269,42 @@ if args.journal_name == True:
 results_df.to_csv(results_directory + results_df_name)
 
 
-binary_f1_score_micro = metrics.f1_score(all_targets_array, binary_pred_array, average='micro')
-binary_f1_score_macro = metrics.f1_score(all_targets_array, binary_pred_array, average='macro')
+binary_f1_score_micro = metrics.f1_score(all_targets, binary_pred, average='micro')
+binary_f1_score_macro = metrics.f1_score(all_targets, binary_pred, average='macro')
 
 print("binary F1 Score (Micro) ", binary_f1_score_micro)
 print("binary F1 Score (Macro) ", binary_f1_score_macro)
 
-binary_pred_array = np.array(binary_pred_list)
-all_targets_array = np.array(all_targets_list)
-
 
 def one_label_f1(label_index):
     label_name = list_of_label[label_index]
-    pred_label = binary_pred_array[:, label_index]
-    true_label = all_targets_array[:, label_index]
-    # print(len(true_label))
-    # print(true_label)
-    # print(len(pred_label))
-    # print(pred_label)
+    pred_label = binary_pred[:, label_index]
+    prob = binary_prob[:, label_index]
+    true_label = all_targets[:, label_index]
+
+    brier = brier_score_loss(true_label, prob)
+    recall = recall_score(true_label, pred_label)
+    precision = precision_score(true_label, pred_label)
     f1 = f1_score(true_label, pred_label)
-    return label_name, f1
+
+    return label_name, f1, recall, precision, brier
+
+
+
 
 print('---------------------')
-for i, label in enumerate(list_of_label):
-    label_name, f1 = one_label_f1(i)
-    print(label_name, '  ', f1)
+print('---------------------')
 
+all_brier = []
+for i, label in enumerate(list_of_label):
+    label_name, f1, recall, precision, brier = one_label_f1(i)
+    print(label_name)
+    print('f1, recall, precision, brier', label_name, f1, recall, precision, brier)
+    all_brier.append(brier)
 
 # usecols list_of_label = ['Place', 'Race', 'Occupation', 'Gender', 'Religion',
 #            'Education', 'Socioeconomic', 'Social', 'Plus']
-
+avg_brier = sum(all_brier)/len(all_brier)
+print('avg brier :', avg_brier)
 print("binary F1 Score (Micro) ", binary_f1_score_micro)
 print("binary F1 Score (Macro) ", binary_f1_score_macro)
