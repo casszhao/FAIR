@@ -14,7 +14,7 @@ from matplotlib import pyplot
 
 sns.set(style="darkgrid", font_scale=1.2)
 
-fileName = 'scibert_500len_8b_20e_binary_results.csv'
+fileName = 'JN_512len_16b_20e_binary_results.csv'
 df = pd.read_csv(fileName, converters={'Ground truth': pd.eval, 'Prediction': pd.eval, 'Probability': pd.eval})
 
 pred_label = df['Prediction']

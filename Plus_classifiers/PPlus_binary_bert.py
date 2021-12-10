@@ -309,5 +309,5 @@ print('avg brier :', avg_brier)
 print("binary F1 Score (Micro) ", binary_f1_score_micro)
 print("binary F1 Score (Macro) ", binary_f1_score_macro)
 
-roc = roc_auc_score(all_targets, binary_pred)
-print('roc: ', roc)
+# roc = roc_auc_score(all_targets, binary_pred)
+# print('roc: ', roc)
